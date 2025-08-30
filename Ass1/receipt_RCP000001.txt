@@ -1,0 +1,34 @@
+================================================
+              CONCERT TICKET RECEIPT
+================================================
+Receipt ID: RCP000001
+Date: 29/08/2025 16:40
+Order ID: ORD000001
+
+Customer Information:
+Username: h1h1
+Full Name: h1h1
+
+Concert Details:
+Concert Name: Spatula & Guitar Concert
+Date & Time: 17/9/2025 (7.30pm - 10.30pm)
+Location: Kuala Lumpur, Malaysia
+
+Ticket Details:
+- VIP Ticket: VIP20250001
+  Seat: A1
+  Price: RM400.00
+
+Merchandise:
+- Light Stick: RM25.00
+- Light Stick: RM25.00
+
+Payment Information:
+Payment Method: 
+Payment Status: Failed
+
+Total Amount: RM450.00
+
+================================================
+Thank you for your purchase!
+================================================
