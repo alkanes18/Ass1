@@ -115,14 +115,18 @@ void loadSeatsFromFile(vector<Session>& session) {
 
     string line;
     int sessionIndex = -1;
+    int row = 0;
 
     while (getline(file, line)) {
         if (line.find("SessionID:") != string::npos) {
             string id = line.substr(line.find(":") + 1);
 
+            id.erase(0, id.find_first_not_of(" \t"));
+
             for (int i = 0; i < session.size(); i++) {
                 if (session[i].sessionID == id) {
                     sessionIndex = i;
+                    row = 0;
                     break;
                 }
             }
@@ -131,7 +135,6 @@ void loadSeatsFromFile(vector<Session>& session) {
             sessionIndex = -1; // reset for next session
         }
         else if (sessionIndex != -1) {
-            static int row = 0;
             if (row < 2) { // VIP
                 for (int c = 0; c < 15; c++) {
                     session[sessionIndex].vipSeats[row][c] = line[c];
@@ -143,7 +146,6 @@ void loadSeatsFromFile(vector<Session>& session) {
                 }
             }
             row++;
-            if (row >= 10) row = 0;
         }
     }
 
@@ -176,7 +178,6 @@ vector<Session> loadSessionsFromFile() {
 	vector<Session> sessions;
 	ifstream file("sessions.txt");
 	if (!file.is_open()) {
-		cout << "No previous session data found, starting fresh.\n";
 		return sessions;
 	}
 
@@ -206,7 +207,6 @@ vector<Session> loadSessionsFromFile() {
     }
 
 	file.close();
-	cout << "Sessions loaded successfully!\n";
 	return sessions;
 }
 
@@ -281,7 +281,6 @@ void addSession(vector<Session>& session) {
 				continue;
         }
     }
-
     initializeSeats(newSession);
     confirmAdd(session, newSession);
 }
@@ -340,6 +339,7 @@ void confirmAdd(vector<Session>& session, Session newSession) {
     if (toupper(choice) == 'Y') {
         session.push_back(newSession);
         cout << "Session added successfully!" << endl;
+        saveSessionsToFile(session);
     }
     else {
         cout << "Operation cancelled." << endl;
@@ -526,7 +526,6 @@ int searchForASession(vector<Session> session) {
 void countRemainingSeats(Session session) {
     int standardCount = 0, vipCount = 0;
 
-    cout << "Seats for " << session.location << endl;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 15; j++) {
             if (session.vipSeats[i][j] == 'O') {
@@ -542,14 +541,13 @@ void countRemainingSeats(Session session) {
         }
     }
     cout << "\nVIP Seats Available Now: " << vipCount << endl;
-    cout << "Standard Seats Available Now: " << standardCount << endl << endl;
+    cout << "Standard Seats Available Now: " << standardCount << endl;
 }
 
 void countAllRemainingSeats(vector<Session> session) {
     int standardCount = 0, vipCount = 0;
 
     for (int a = 0; a < session.size(); a++) {
-        cout << "Seats for " << session[a].location << endl;
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 15; j++) {
                 if (session[a].vipSeats[i][j] == 'O') {
@@ -564,8 +562,8 @@ void countAllRemainingSeats(vector<Session> session) {
                 }
             }
         }
-        cout << "\nVIP Seats Available Now: " << vipCount << endl;
-        cout << "Standard Seats Available Now: " << standardCount << endl << endl;
     }
+    cout << "\nVIP Seats Available Now: " << vipCount << endl;
+    cout << "Standard Seats Available Now: " << standardCount << endl;
     cout << endl;
 }

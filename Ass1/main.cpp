@@ -20,6 +20,11 @@ int main() {
         initializeSessionID(session);
         loadSeatsFromFile(session); // Load booked seats from file
     }
+    else {
+        session = loadSessionsFromFile();
+        initializeAllSeats(session);
+        loadSeatsFromFile(session); // Load sessions from file
+    }
 
     vector<Merchandise> merchandise;
     initializeMerchandise(merchandise); // Initialize merchandise
