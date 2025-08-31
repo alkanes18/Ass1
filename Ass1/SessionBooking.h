@@ -8,26 +8,12 @@ struct Session {
     std::string sessionID;
     std::string location;
     std::string time;
+    double vipPrice;
+    double standardPrice;
+    int vipTicketsSold = 0;
+    int standardTicketsSold = 0;
     char vipSeats[2][15] = { 0 };
     char standardSeats[8][15] = { 0 };
-    double vipPrice;
-    int vipTicketsSold = 0;
-    double standardPrice;
-    int standardTicketsSold = 0;
-};
-
-struct BookingInfo {
-    std::string attendeeName;
-    std::string userID;
-    std::string location;
-    std::string time;
-    std::string seatType;
-    int seatRow, seatCol;
-    double ticketPrice;
-};
-
-struct Attendee {
-
 };
 
 // Display menus
@@ -43,9 +29,16 @@ void initializeSessionID(std::vector<Session>& session);
 // Session ID + seat naming
 std::string generateSessionID(std::vector<Session>& session);
 
+// File
+void saveSeatsToFile(const std::vector<Session>& session);
+void loadSeatsFromFile(std::vector<Session>& session);
+void saveSessionsToFile(const std::vector<Session>& session);
+std::vector<Session> loadSessionsFromFile();
+
 // Session CRUD
 void addSession(std::vector<Session>& session);
 void deleteSession(std::vector<Session>& session);
+bool hasBooking(const Session& session);
 void confirmAdd(std::vector<Session>& session, Session newSession);
 void confirmDelete(std::vector<Session>& session, int num);
 
@@ -54,8 +47,8 @@ void displaySeats(Session session);
 void displayAllSeats(std::vector<Session> session);
 
 bool isSeatAvailable(Session session, std::string seatType, int row, int col);
-bool bookSeat(Session& session, Attendee& user, std::string seatType, int row, int col);
-void cancelBooking(Attendee& user);
+bool bookSeat(Session& session, std::string seatType, int row, int col);
+void resetSeats(Session& session);
 
 // Session info
 void displayAllSessions(std::vector<Session> session);

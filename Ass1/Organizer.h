@@ -14,6 +14,6 @@ struct SystemCredentials {
 };
 
 bool confirmOrganizerPassword(const SystemCredentials& creds);
-void organizerMenu(std::vector<User>& users, const SystemCredentials& creds, std::vector<Session> session, std::vector<Merchandise> merchandise);
+void organizerMenu(std::vector<User>& users, const SystemCredentials& creds, std::vector<Session>& session, std::vector<Merchandise>& merchandise);
 void viewAllUsers(std::vector<User>& users, const SystemCredentials& creds);
 void printUserList(const std::vector<User>& users, const SystemCredentials& creds);

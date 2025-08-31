@@ -52,7 +52,7 @@ void saveUsersToFile(const vector<User>& users) {
     for (int i = 0; i < users.size(); i++) {
         fout << users[i].userID << "," << users[i].name << "," << users[i].phone << ","
             << users[i].email << "," << users[i].password << ","
-            << users[i].isBlocked << "," << users[i].bookingInfo << endl;
+            << users[i].isBlocked << endl;
     }
     fout.close(); // Close the file after writing.
 }
@@ -73,7 +73,6 @@ vector<User> loadUsersFromFile() {
         getline(ss, tempUser.email, ',');
         getline(ss, tempUser.password, ',');
         getline(ss, blockedStr, ',');
-        getline(ss, tempUser.bookingInfo);
 
         // This is a clearer if-else version of the boolean assignment.
         if (blockedStr == "1") {
@@ -302,7 +301,7 @@ void editUserInfo(int userIndex, vector<User>& users) {
     } while (choice != 5);
 }
 
-void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vector<Merchandise> merchandise) {
+void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vector<Merchandise>& merchandise) {
     while (true) {
         cout << "\n--- User Menu ---\n";
         cout << "Welcome, " << users[userIndex].name << "!\n";

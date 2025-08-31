@@ -16,32 +16,12 @@ void displayPaymentMethods() {
     cout << "2. Debit Card" << endl;
     cout << "3. Online Banking" << endl;
     cout << "4. E-Wallet" << endl;
+    cout << "0. Cancel Payment" << endl;
 }
 
 // Validate payment information
 bool validatePaymentInfo(const PaymentInfo& payment) {
-    // Basic validation
-    if (payment.cardNumber.length() < 13 || payment.cardNumber.length() > 19) {
-        cout << "Invalid card number length." << endl;
-        return false;
-    }
-
-    if (payment.cardHolder.empty()) {
-        cout << "Card holder name is required." << endl;
-        return false;
-    }
-
-    if (payment.expiryDate.length() != 5 || payment.expiryDate[2] != '/') {
-        cout << "Invalid expiry date format (MM/YY)." << endl;
-        return false;
-    }
-
-    if (payment.cvv.length() < 3 || payment.cvv.length() > 4) {
-        cout << "Invalid CVV." << endl;
-        return false;
-    }
-
-    return true;
+    return !(payment.paymentMethod.empty() || payment.cardNumber.empty() || payment.cardHolder.empty());
 }
 
 // Process payment
@@ -49,161 +29,232 @@ void processPayment(Order& order, PaymentInfo& payment) {
     cout << "\n=== Payment Processing ===" << endl;
     cout << "Total Amount: RM" << fixed << setprecision(2) << order.totalAmount << endl;
 
-    displayPaymentMethods();
-    cout << "Select payment method (1-4): ";
     int methodChoice;
-    cin >> methodChoice;
-    cin.ignore();
+    string input;
 
-    switch (methodChoice) {
-    case 1: payment.paymentMethod = "Credit Card"; break;
-    case 2: payment.paymentMethod = "Debit Card"; break;
-    case 3: payment.paymentMethod = "Online Banking"; break;
-    case 4: payment.paymentMethod = "E-Wallet"; break;
-    default: payment.paymentMethod = "Credit Card"; break;
+    // loop until valid choice or cancel
+    while (true) {
+        displayPaymentMethods();
+        cout << "Select payment method (0-4): ";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover input
+        getline(cin, input);
+
+        if (input.empty()) {
+            cout << "Error: Invalid input. Please enter a number between 0-4." << endl;
+            continue;
+        }
+
+        try {
+            methodChoice = stoi(input);
+        }
+        catch (...) {
+            cout << "Error: Invalid input. Please enter a number between 0-4." << endl;
+            continue;
+        }
+
+        if (methodChoice < 0 || methodChoice > 4) {
+            cout << "Error: Invalid choice. Please enter a number between 0-4." << endl;
+            continue;
+        }
+
+        if (methodChoice == 0) {
+            cout << "Payment cancelled by user." << endl;
+            order.paymentStatus = "Cancelled";
+            order.paymentMethod = "Cancelled";
+            return;
+        }
+
+        // assign method
+        switch (methodChoice) {
+        case 1: payment.paymentMethod = "Credit Card"; break;
+        case 2: payment.paymentMethod = "Debit Card"; break;
+        case 3: payment.paymentMethod = "Online Banking"; break;
+        case 4: payment.paymentMethod = "E-Wallet"; break;
+        }
+        break; // valid choice ? exit loop
     }
 
-    cout << "\nEnter card number: ";
-    getline(cin, payment.cardNumber);
+    // === Payment details ===
+    if (payment.paymentMethod == "Online Banking") {
+        // Account number
+        do {
+            cout << "\nEnter account number (10-12 digits): ";
+            getline(cin, payment.cardNumber);
 
-    cout << "Enter card holder name: ";
-    getline(cin, payment.cardHolder);
+            if (payment.cardNumber.empty()) {
+                cout << "Error: Account number cannot be empty." << endl;
+                continue;
+            }
+            if (payment.cardNumber.length() < 10 || payment.cardNumber.length() > 12) {
+                cout << "Error: Account number must be 10-12 digits." << endl;
+                continue;
+            }
+            bool validDigits = true;
+            for (char c : payment.cardNumber) {
+                if (!isdigit(c)) { validDigits = false; break; }
+            }
+            if (!validDigits) {
+                cout << "Error: Account number must contain only digits." << endl;
+                continue;
+            }
+            break;
+        } while (true);
 
-    cout << "Enter expiry date (MM/YY): ";
-    getline(cin, payment.expiryDate);
+        // Account holder
+        do {
+            cout << "Enter account holder name: ";
+            getline(cin, payment.cardHolder);
 
-    cout << "Enter CVV: ";
-    getline(cin, payment.cvv);
+            if (payment.cardHolder.empty()) {
+                cout << "Error: Account holder name cannot be empty." << endl;
+                continue;
+            }
+            bool validName = true;
+            for (char c : payment.cardHolder) {
+                if (!isalpha(c) && c != ' ') { validName = false; break; }
+            }
+            if (!validName) {
+                cout << "Error: Account holder name must contain only letters and spaces." << endl;
+                continue;
+            }
+            break;
+        } while (true);
+    }
+    else if (payment.paymentMethod == "E-Wallet") {
+        cout << "\n=== E-Wallet Payment ===" << endl;
+        cout << "Scan the QR code to proceed with payment..." << endl;
 
-    if (validatePaymentInfo(payment)) {
-        cout << "\nProcessing payment..." << endl;
-        // Simulate payment processing
-        cout << "Payment processed successfully!" << endl;
-        order.paymentStatus = "Paid";
-        order.paymentMethod = payment.paymentMethod;
+        string confirmInput;
+        cout << "\nDid you complete the payment? (Y/N): ";
+        getline(cin, confirmInput);
+
+        if (!confirmInput.empty() && toupper(confirmInput[0]) == 'Y') {
+            order.paymentMethod = "E-Wallet";
+            order.paymentStatus = "Paid";
+            payment.cardNumber = "-";
+            payment.cardHolder = "-";
+            cout << "E-Wallet payment successful!" << endl;
+        }
+        else {
+            order.paymentStatus = "Failed";
+            cout << "E-Wallet payment cancelled." << endl;
+        }
+        return;
     }
     else {
-        cout << "Payment validation failed. Please try again." << endl;
-        order.paymentStatus = "Failed";
+        // Card number
+        do {
+            cout << "\nEnter card number (13-19 digits): ";
+            getline(cin, payment.cardNumber);
+
+            if (payment.cardNumber.empty()) {
+                cout << "Error: Card number cannot be empty." << endl;
+                continue;
+            }
+            if (payment.cardNumber.length() < 13 || payment.cardNumber.length() > 19) {
+                cout << "Error: Card number must be 13-19 digits." << endl;
+                continue;
+            }
+            bool validDigits = true;
+            for (char c : payment.cardNumber) {
+                if (!isdigit(c)) { validDigits = false; break; }
+            }
+            if (!validDigits) {
+                cout << "Error: Card number must contain only digits." << endl;
+                continue;
+            }
+            break;
+        } while (true);
+
+        // Card holder
+        do {
+            cout << "Enter card holder name: ";
+            getline(cin, payment.cardHolder);
+
+            if (payment.cardHolder.empty()) {
+                cout << "Error: Card holder name cannot be empty." << endl;
+                continue;
+            }
+            bool validName = true;
+            for (char c : payment.cardHolder) {
+                if (!isalpha(c) && c != ' ') { validName = false; break; }
+            }
+            if (!validName) {
+                cout << "Error: Card holder name must contain only letters and spaces." << endl;
+                continue;
+            }
+            break;
+        } while (true);
     }
+
+    // Success
+    cout << "\nProcessing payment..." << endl;
+    cout << "Payment processed successfully!" << endl;
+    order.paymentStatus = "Paid";
+    order.paymentMethod = payment.paymentMethod;
 }
 
 // Generate receipt
 void generateReceipt(const Order& order, const PaymentInfo& payment) {
-    string receiptID = generateReceiptID();
-    string filename = "receipt_" + receiptID + ".txt";
-
-    ofstream receiptFile(filename);
-    if (!receiptFile) {
-        cout << "Error creating receipt file." << endl;
-        return;
-    }
-
-    receiptFile << "================================================" << endl;
-    receiptFile << "              CONCERT TICKET RECEIPT" << endl;
-    receiptFile << "================================================" << endl;
-    receiptFile << "Receipt ID: " << receiptID << endl;
-    receiptFile << "Date: " << order.orderDate << endl;
-    receiptFile << "Order ID: " << order.orderID << endl;
-    receiptFile << endl;
-    receiptFile << "Customer Information:" << endl;
-    receiptFile << "Username: " << order.username << endl;
-    receiptFile << "Full Name: " << order.fullName << endl;
-    receiptFile << endl;
-    receiptFile << "Concert Details:" << endl;
-    receiptFile << "Concert Name: " << order.concertName << endl;
-    receiptFile << "Date & Time: " << order.concertDate << " (" << order.concertTime << ")" << endl;
-    receiptFile << "Location: " << order.location << endl;
-    receiptFile << endl;
-    receiptFile << "Ticket Details:" << endl;
-    for (const auto& ticket : order.tickets) {
-        receiptFile << "- " << ticket.seatType << " Ticket: " << ticket.ticketID << endl;
-        receiptFile << "  Seat: " << seatName(ticket.seatRow, ticket.seatCol) << endl;
-        receiptFile << "  Price: RM" << fixed << setprecision(2) << ticket.price << endl;
-    }
-    receiptFile << endl;
-
-    if (!order.merchandise.empty()) {
-        receiptFile << "Merchandise:" << endl;
-        for (const auto& item : order.merchandise) {
-            receiptFile << "- " << item.name << ": RM" << fixed << setprecision(2) << item.price << endl;
-        }
-        receiptFile << endl;
-    }
-
-    receiptFile << "Payment Information:" << endl;
-    receiptFile << "Payment Method: " << order.paymentMethod << endl;
-    receiptFile << "Payment Status: " << order.paymentStatus << endl;
-    receiptFile << endl;
-    receiptFile << "Total Amount: RM" << fixed << setprecision(2) << order.totalAmount << endl;
-    receiptFile << endl;
-    receiptFile << "================================================" << endl;
-    receiptFile << "Thank you for your purchase!" << endl;
-    receiptFile << "================================================" << endl;
-
-    receiptFile.close();
-
-    cout << "\nReceipt generated: " << filename << endl;
-    cout << "You can print this receipt for your records." << endl;
+    cout << "\n=== Receipt ===" << endl;
+    cout << "Order ID       : " << order.orderID << endl;
+    cout << "User ID        : " << order.userID << endl;
+    cout << "Concert        : " << order.concertName << endl;
+    cout << "Date           : " << order.concertDate << " " << order.concertTime << endl;
+    cout << "Location       : " << order.location << endl;
+    cout << "Total Amount   : RM" << fixed << setprecision(2) << order.totalAmount << endl;
+    cout << "Payment Method : " << payment.paymentMethod << endl;
+    cout << "Payment Status : " << order.paymentStatus << endl;
+    cout << "Order Date     : " << order.orderDate << endl;
+    cout << "================" << endl;
 }
 
 // Save order to file
 void saveOrderToFile(const Order& order) {
-    ofstream orderFile("orders.txt", ios::app);
-    if (!orderFile) {
-        cout << "Error saving order to file." << endl;
-        return;
+    ofstream file("order_history.txt", ios::app);
+    if (file.is_open()) {
+        file << "Order ID       : " << order.orderID << "\n";
+        file << "User ID        : " << order.userID << "\n";
+        file << "Concert        : " << order.concertName << "\n";
+        file << "Date           : " << order.concertDate << " " << order.concertTime << "\n";
+        file << "Location       : " << order.location << "\n";
+        file << "Total Amount   : RM" << fixed << setprecision(2) << order.totalAmount << "\n";
+        file << "Payment Method : " << order.paymentMethod << "\n";
+        file << "Payment Status : " << order.paymentStatus << "\n";
+        file << "Order Date     : " << order.orderDate << "\n";
+        file << "====================\n\n";
+        file.close();
     }
-
-    orderFile << order.orderID << "," << order.userID << "," << order.username << ","
-        << order.concertName << "," << order.concertDate << "," << order.concertTime << ","
-        << order.location << "," << order.totalAmount << "," << order.paymentMethod << ","
-        << order.paymentStatus << "," << order.orderDate << endl;
-
-    orderFile.close();
+    else {
+        cout << "Error: Could not open file to save order history." << endl;
+    }
 }
 
 // Display order history
 void displayOrderHistory(const string& userID) {
-    ifstream orderFile("orders.txt");
-    if (!orderFile) {
-        cout << "No order history found." << endl;
-        return;
-    }
-
-    cout << "\n=== Order History ===" << endl;
-    cout << left << setw(12) << "Order ID" << setw(30) << "Concert" << setw(15) << "Location"
-        << setw(15) << "Amount" << setw(15) << "Status" << endl;
-    cout << string(80, '-') << endl;
-
+    ifstream file("order_history.txt");
     string line;
     bool found = false;
-    while (getline(orderFile, line)) {
-        stringstream ss(line);
-        string orderID, uid, username, concert, date, time, location, amount, method, status, orderDate;
 
-        getline(ss, orderID, ',');
-        getline(ss, uid, ',');
-        getline(ss, username, ',');
-        getline(ss, concert, ',');
-        getline(ss, date, ',');
-        getline(ss, time, ',');
-        getline(ss, location, ',');
-        getline(ss, amount, ',');
-        getline(ss, method, ',');
-        getline(ss, status, ',');
-        getline(ss, orderDate);
-
-        if (uid == userID) {
-            cout << left << setw(12) << orderID << setw(30) << concert << setw(15) << location
-                << setw(3) << "RM" << setw(12) << amount << setw(15) << status << endl;
-            found = true;
+    cout << "\n=== Order History for User ID: " << userID << " ===" << endl;
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            if (line.find("User ID") != string::npos && line.find(userID) != string::npos) {
+                found = true;
+                cout << line << endl;
+                for (int i = 0; i < 8 && getline(file, line); ++i) {
+                    cout << line << endl;
+                }
+                cout << endl;
+            }
         }
+        file.close();
+    }
+    else {
+        cout << "Error: Could not open order history file." << endl;
     }
 
     if (!found) {
-        cout << "No orders found for this user." << endl;
+        cout << "No orders found for User ID: " << userID << endl;
     }
-
-    orderFile.close();
 }

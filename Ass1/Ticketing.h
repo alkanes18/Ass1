@@ -45,7 +45,6 @@ struct Order {
 };
 
 // Initialization
-void initializePrices(std::vector<Session>& sessions);
 void initializeMerchandise(std::vector<Merchandise>& merchandise);
 
 // Ticket/Order IDs

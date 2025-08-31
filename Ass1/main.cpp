@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include "User.h"
 #include "Organizer.h"
 #include "Ticketing.h"
@@ -11,11 +12,14 @@ using namespace std;
 int main() {
     vector<User> users = loadUsersFromFile();
 
-    vector<Session> session = { {"", "Kuala Lumpur, Malaysia", "17/9/2025 (7.30pm - 10.30pm)"}, {"", "Kuala Lumpur, Malaysia", "18/9/2025 (7.30pm - 10.30pm)"},
-                                {"", "Singapore, Singapore", "21/9/2025 (8.00pm - 10.30pm)"}, {"", "Pulau Penang, Malaysia", "1/10/2025 (2.00pm - 4.30pm)"} };
-    initializeAllSeats(session);
-    initializeSessionID(session);
-    initializePrices(session); // Initialize prices for sessions
+    vector<Session> session = loadSessionsFromFile();
+    if (session.empty()) { // If no sessions are loaded from file, initialize default sessions.
+        session = { {"", "Kuala Lumpur, Malaysia", "17/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00}, {"", "Kuala Lumpur, Malaysia", "18/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00},
+                    {"", "Singapore, Singapore", "21/9/2025 (8.00pm - 10.30pm)", 500.00, 200.00}, {"", "Pulau Penang, Malaysia", "1/10/2025 (2.00pm - 4.30pm)", 420.00, 170.00} };
+        initializeAllSeats(session);
+        initializeSessionID(session);
+        loadSeatsFromFile(session); // Load booked seats from file
+    }
 
     vector<Merchandise> merchandise;
     initializeMerchandise(merchandise); // Initialize merchandise

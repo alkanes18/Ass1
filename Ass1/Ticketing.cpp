@@ -5,29 +5,12 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <string>
 
 using namespace std;
-
-// Initialize prices for different locations
-void initializePrices(vector<Session>& sessions) {
-    for (int i = 0; i < sessions.size(); i++) {
-        if (sessions[i].location.find("Malaysia") != string::npos) {
-            sessions[i].vipPrice = 400.0 + (i * 50.0); // RM400-800 range
-            sessions[i].standardPrice = 100.0 + (i * 25.0); // RM100-250 range
-        }
-        else if (sessions[i].location.find("Singapore") != string::npos) {
-            sessions[i].vipPrice = 600.0 + (i * 50.0); // Higher prices for Singapore
-            sessions[i].standardPrice = 150.0 + (i * 25.0);
-        }
-        else {
-            sessions[i].vipPrice = 500.0 + (i * 50.0); // Default prices
-            sessions[i].standardPrice = 120.0 + (i * 25.0);
-        }
-    }
-}
 
 // Initialize merchandise items
 void initializeMerchandise(vector<Merchandise>& merchandise) {
@@ -51,10 +34,25 @@ string generateTicketID(const string& seatType) {
 
 // Generate unique order ID
 string generateOrderID() {
-    static int orderCounter = 1;
+    ifstream file("order_history.txt");
+    string line, lastOrderID = "ORD000001";
+    while (getline(file, line)) {
+        if (line.find("Order ID") != string::npos) {
+            lastOrderID = line.substr(line.find(":") + 2);
+            lastOrderID.erase(remove_if(lastOrderID.begin(), lastOrderID.end(), ::isspace), lastOrderID.end());
+        }
+    }
+    file.close();
+
+    int number = stoi(lastOrderID.substr(3)); // "ORDXXXXXX" -> XXXXXX
+    stringstream ss;
+    ss << "ORD" << setfill('0') << setw(6) << number + 1;
+    return ss.str();
+
+    /*static int orderCounter = 1;
     stringstream ss;
     ss << "ORD" << setfill('0') << setw(6) << orderCounter++;
-    return ss.str();
+    return ss.str();*/
 }
 
 // Generate unique receipt ID
@@ -106,6 +104,7 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     selectSeatType(seatType);
     if (seatType.empty()) return;
 
+
     // Step 4: Select seat
     int row, col;
     selectSeat(sessions[selectedSession], seatType, row, col);
@@ -154,15 +153,33 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     PaymentInfo payment;
     processPayment(order, payment);
 
+    // Check if payment was cancelled or failed
+    if (order.paymentStatus == "Cancelled") {
+        cout << "\n=== Purchase Cancelled ===" << endl;
+        cout << "Payment was cancelled. Ticket booking cancelled." << endl;
+        return;
+    }
+
+    if (order.paymentStatus == "Failed") {
+        cout << "\n=== Purchase Failed ===" << endl;
+        cout << "Payment failed. Ticket booking cancelled." << endl;
+        return;
+    }
+
+    if (seatType == "VIP") {
+        sessions[selectedSession].vipTicketsSold++;
+    }
+    else {
+        sessions[selectedSession].standardTicketsSold++;
+    }
+
     // Step 9: Generate receipt
     generateReceipt(order, payment);
 
-    // Step 10: Save order
+    // Step 10: Save to file
     saveOrderToFile(order);
-
-    // Update user booking info
-    users[userIndex].bookingInfo = "Booked - " + order.concertName + " at " + order.location;
     saveUsersToFile(users);
+    saveSeatsToFile(sessions);
 
     cout << "\n=== Purchase Complete! ===" << endl;
     cout << "Your ticket has been booked successfully!" << endl;
@@ -226,33 +243,73 @@ void selectSeat(Session& session, string seatType, int& row, int& col) {
     displaySeats(session);
 
     while (displayBookingMenu) {
-        cout << "\nEnter seat row (A-J): ";
+        // Step 1: Get row (A-J) - Single character only
         char rowChar;
-        cin >> rowChar;
-        int originalRow = toupper(rowChar) - 'A';
+        string rowInput;
 
-        cout << "Enter seat column (1-15): ";
-        cin >> col;
-        col--; // Convert to 0-based index
+        do {
+            cout << "\nEnter seat row (A-J): ";
+            cin >> rowInput;
 
-        if (col < 0 || col >= 15) {
-            cout << "Invalid column selection.\n";
-            continue;
-        }
+            // Check if input is exactly one character
+            if (rowInput.length() != 1) {
+                cout << "Error: Please enter only one character (A-J)." << endl;
+                continue;
+            }
+
+            rowChar = toupper(rowInput[0]);
+            if (rowChar < 'A' || rowChar > 'J') {
+                cout << "Error: Invalid row. Please enter A-J only." << endl;
+                continue;
+            }
+            break;
+        } while (true);
+
+        int originalRow = rowChar - 'A';
+
+        // Step 2: Get column (1-15)
+        do {
+            cout << "Enter seat column (1-15): ";
+            string colInput;
+            cin >> colInput;
+
+            // Check if input is numeric
+            bool validNumber = true;
+            for (char c : colInput) {
+                if (!isdigit(c)) {
+                    validNumber = false;
+                    break;
+                }
+            }
+
+            if (!validNumber) {
+                cout << "Error: Invalid column. Please enter a number between 1-15." << endl;
+                continue;
+            }
+
+            col = stoi(colInput);
+            if (col < 1 || col > 15) {
+                cout << "Error: Invalid column. Please enter a number between 1-15." << endl;
+                continue;
+            }
+
+            col--; // Convert to 0-based index
+            break;
+        } while (true);
 
         int adjustedRow = -1;
 
         // Validate seat selection
         if (seatType == "VIP") {
             if (originalRow < 0 || originalRow >= 2) {
-                cout << "\nInvalid VIP seat selection." << endl;
+                cout << "\nError: Invalid VIP seat selection. VIP seats are in rows A-B only." << endl;
                 continue;
             }
             adjustedRow = originalRow;
         }
         else {
             if (originalRow < 2 || originalRow >= 10) {
-                cout << "\nInvalid Standard seat selection." << endl;
+                cout << "\nError: Invalid Standard seat selection. Standard seats are in rows C-J only." << endl;
                 continue;
             }
             adjustedRow = originalRow - 2;
@@ -260,19 +317,18 @@ void selectSeat(Session& session, string seatType, int& row, int& col) {
 
         // Check if seat is available
         if (!isSeatAvailable(session, seatType, adjustedRow, col)) {
-            cout << "Seat is already taken!" << endl;
+            cout << "Error: Seat is already taken! Please choose another seat." << endl;
             continue;
         }
 
         // Book the seat
-        Attendee tempUser;
-        if (bookSeat(session, tempUser, seatType, adjustedRow, col)) {
+        if (bookSeat(session, seatType, adjustedRow, col)) {
             cout << "Seat " << seatName(originalRow, col) << " selected successfully!" << endl;
             row = originalRow;
             return;
         }
         else {
-            cout << "Booking failed, please try again.\n";
+            cout << "Error: Booking failed, please try again.\n";
         }
     }
 }

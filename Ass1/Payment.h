@@ -8,8 +8,6 @@
 struct PaymentInfo {
     std::string cardNumber;
     std::string cardHolder;
-    std::string expiryDate;
-    std::string cvv;
     std::string paymentMethod;
 };
 

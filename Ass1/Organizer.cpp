@@ -1,5 +1,6 @@
 #include "Organizer.h"
 #include "User.h"
+#include "Report.h"
 
 #include <iostream>
 #include <limits>
@@ -15,7 +16,7 @@ bool confirmOrganizerPassword(const SystemCredentials& creds) {
     return pw == creds.organizerPW;
 }
 
-void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<Session> session, vector<Merchandise> merchandise) {
+void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<Session>& session, vector<Merchandise>& merchandise) {
     int sessionMenuOption1 = 0;
     bool runningSessionMenu1 = true;
 
@@ -34,6 +35,7 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             }
         }
 
+        int resetIndex = 0; // 1-based index for user
         switch (choice) {
         case 1:
             viewAllUsers(users, creds);
@@ -52,7 +54,6 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
 
                 if (statusChoice == 1) {
                     users[userIndex].isBlocked = true;
-                    users[userIndex].bookingInfo = "None"; // Reset booking info if blocked.
                     cout << "User has been blocked.\n";
                     saveUsersToFile(users);
                 }
@@ -96,6 +97,12 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             while (runningSessionMenu1) {
                 displaySessionMenu1();
                 cin >> sessionMenuOption1;
+                if (cin.fail()) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Invalid input. Please enter a number.\n";
+                    continue;
+                }
 
                 switch (sessionMenuOption1) {
                 case 1:
@@ -104,23 +111,47 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                     break;
                 case 2:
                     addSession(session);
+                    saveSeatsToFile(session);
                     break;
                 case 3:
                     deleteSession(session);
                     break;
                 case 4:
-                    /*viewReport();*/
+                    while (true) {
+                        displayAllSessions(session);
+                        cout << "Select session index to reset seats (0 to cancel): ";
+                        cin >> resetIndex;
+
+                        if (cin.fail()) {
+                            cin.clear();
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            cout << "Invalid input. Please enter a number.\n";
+                            continue;
+                        }
+                        if (resetIndex == 0) {
+                            cout << "Operation cancelled.\n";
+                            break;
+                        }
+
+                        if (resetIndex < 1 || resetIndex > session.size()) {
+                            cout << "Invalid session index.\n";
+                        }
+                        else {
+                            resetSeats(session[resetIndex - 1]);
+                            saveSeatsToFile(session);
+                            break;
+                        }
+                    }        
                     break;
                 case 5:
-                    /*writeReportToFile();*/
-                    cout << "Report generated successfully!" << endl;
+                    runReportMenu(session, merchandise);
                     break;
                 case 6:
                     cout << "Exiting...\n";
                     runningSessionMenu1 = false;
                     break;
                 default:
-                    cout << "Invalid option! Please type 1 - 4 only." << endl;
+                    cout << "Invalid option! Please type 1 - 6 only." << endl;
                     continue;
                 }
             }
@@ -191,13 +222,12 @@ void printUserList(const vector<User>& users, const SystemCredentials& creds) {
     // Print the table header with corrected widths.
     cout << "\n" << left
         << setw(10) << "User ID"
-        << setw(16) << "Name"
+        << setw(20) << "Name"
         << setw(14) << "Phone"
-        << setw(26) << "Email" // Increased width for email
+        << setw(30) << "Email" // Increased width for email
         << setw(20) << "Password" // Increased width for password
-        << setw(9) << "Status"
-        << setw(25) << "Booking Info" << endl;
-    cout << string(155, '-') << endl; // Adjusted the separator line width
+        << setw(9) << "Status" << endl;
+    cout << string(115, '-') << endl; // Adjusted the separator line width
 
     bool foundUsers = false;
     for (int i = 0; i < users.size(); i++) {
@@ -208,15 +238,14 @@ void printUserList(const vector<User>& users, const SystemCredentials& creds) {
         // Print each user's data, now including the name.
         cout << left
             << setw(10) << users[i].userID
-            << setw(16) << users[i].name // ADDED THE MISSING NAME COLUMN
+            << setw(20) << users[i].name // ADDED THE MISSING NAME COLUMN
             << setw(14) << users[i].phone
-            << setw(26) << users[i].email
+            << setw(30) << users[i].email
             << setw(20) << users[i].password
-            << setw(9) << (users[i].isBlocked ? "Blocked" : "Active")
-            << setw(25) << users[i].bookingInfo << endl;
+            << setw(9) << (users[i].isBlocked ? "Blocked" : "Active") << endl;
     }
     if (!foundUsers) {
         cout << "No users found.\n";
     }
-    cout << string(155, '-') << endl;
+    cout << string(115, '-') << endl;
 }

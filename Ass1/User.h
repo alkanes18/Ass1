@@ -13,7 +13,6 @@ struct User {
     std::string email;
     std::string password;
     bool isBlocked = false;
-    std::string bookingInfo = "None";
 };
 
 // Helper
@@ -36,4 +35,4 @@ bool compareByName(const User& a, const User& b);
 // Core features
 void registerUser(std::vector<User>& users);
 void editUserInfo(int userIndex, std::vector<User>& users);
-void userMenu(int userIndex, std::vector<User>& users, std::vector<Session>& sessions, std::vector<Merchandise> merchandise);
+void userMenu(int userIndex, std::vector<User>& users, std::vector<Session>& sessions, std::vector<Merchandise>& merchandise);

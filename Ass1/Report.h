@@ -7,6 +7,10 @@
 #include "Ticketing.h"
 #include "Payment.h"
 
-void viewReport(std::vector<Session> session, std::vector<Merchandise> merchandise);
-void writeReportToFile(std::vector<Session> session, std::vector<Merchandise> merchandise);
-double calculateMerchIncome(std::vector<Merchandise> merchandise);
+void displayReportMenu();
+void runReportMenu(const std::vector<Session>& session, const std::vector<Merchandise>& merchandise);
+void viewReport(const std::vector<Session>& session, const std::vector<Merchandise>& merchandise);
+void viewMerchReport(const std::vector<Merchandise>& merchandise);
+void viewSessionDetailedReport(const std::vector<Session>& session);
+void writeReportToFile(const std::vector<Session>& session, const std::vector<Merchandise>& merchandise);
+double calculateMerchIncome(const std::vector<Merchandise>& merchandise);

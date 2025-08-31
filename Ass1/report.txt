@@ -1,0 +1,16 @@
+=== Concert Ticket Sales Summary ===
+
+Kuala Lumpur, Malaysia (S001): 0
+Kuala Lumpur, Malaysia (S002): 0
+Singapore, Singapore (S003): 1
+Pulau Penang, Malaysia (S004): 0
+----------------------------------------
+Total Tickets Sold         : 1
+Total Income (Ticket)      : RM 500
+Total Income (Merchandise) : RM 40
+Overall Income             : RM 540
+Average Tickets            : 0
+Average Revenue            : RM 135
+Highest Sales              : Singapore, Singapore (1 tickets, RM 500)
+Lowest Sales              : Kuala Lumpur, Malaysia (0 tickets, RM 0)
+========================================
