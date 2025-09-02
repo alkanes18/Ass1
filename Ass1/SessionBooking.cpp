@@ -56,6 +56,8 @@ void initializeAllSeats(vector<Session>& session) {
                 session[a].standardSeats[i][j] = 'O';
             }
         }
+        session[a].vipTicketsSold = 0;
+        session[a].standardTicketsSold = 0;
     }
 }
 
@@ -454,12 +456,30 @@ bool bookSeat(Session& session, string seatType, int row, int col) {
     return true;
 }
 
-void resetSeats(Session& session) {
-	initializeSeats(session);
-	session.vipTicketsSold = 0;
-	session.standardTicketsSold = 0;
+void resetSeats(vector<Session>& session, const string& filename) {
+    initializeAllSeats(session);
 
-    cout << "All seats for session " << session.sessionID << " have been reset to available." << endl;
+    ifstream inFile(filename);
+    if (!inFile) {
+        cout << "Failed to open file.\n";
+        return;
+    }
+
+    string content;
+    string line;
+    while (getline(inFile, line)) {
+        for (char& c : line) {
+            if (c == 'X') c = 'O';
+        }
+        content += line + "\n";
+    }
+    inFile.close();
+
+    ofstream outFile(filename);
+    outFile << content;
+    outFile.close();
+
+    cout << "All seats in file " << filename << " have been reset to 'O'.\n";
 }
 
 void displayAllSessions(vector<Session> session) {
@@ -541,7 +561,7 @@ void countRemainingSeats(Session session) {
         }
     }
     cout << "\nVIP Seats Available Now: " << vipCount << endl;
-    cout << "Standard Seats Available Now: " << standardCount << endl;
+    cout << "Standard Seats Available Now: " << standardCount;
 }
 
 void countAllRemainingSeats(vector<Session> session) {

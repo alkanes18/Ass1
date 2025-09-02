@@ -118,30 +118,22 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                     break;
                 case 4:
                     while (true) {
-                        displayAllSessions(session);
-                        cout << "Select session index to reset seats (0 to cancel): ";
-                        cin >> resetIndex;
-
-                        if (cin.fail()) {
-                            cin.clear();
-                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                            cout << "Invalid input. Please enter a number.\n";
-                            continue;
-                        }
-                        if (resetIndex == 0) {
-                            cout << "Operation cancelled.\n";
-                            break;
-                        }
-
-                        if (resetIndex < 1 || resetIndex > session.size()) {
-                            cout << "Invalid session index.\n";
-                        }
-                        else {
-                            resetSeats(session[resetIndex - 1]);
-                            saveSeatsToFile(session);
-                            break;
-                        }
-                    }        
+                        char confirm;
+                        cout << "Are you sure you want to reset all seats? (y/n): ";
+                        cin >> confirm;
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                        if (confirm == 'y' || confirm == 'Y') {
+                            resetSeats(session, "seats.txt");
+							break;
+						}
+						else if (confirm == 'n' || confirm == 'N') {
+							cout << "Reset cancelled.\n";
+							break; // Exit the confirmation loop and cancel reset.
+						}
+						else {
+							cout << "Invalid input. Please enter 'y' or 'n'.\n";
+						}
+                    }
                     break;
                 case 5:
                     runReportMenu(session, merchandise);

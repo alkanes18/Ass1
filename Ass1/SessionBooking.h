@@ -48,7 +48,7 @@ void displayAllSeats(std::vector<Session> session);
 
 bool isSeatAvailable(Session session, std::string seatType, int row, int col);
 bool bookSeat(Session& session, std::string seatType, int row, int col);
-void resetSeats(Session& session);
+void resetSeats(std::vector<Session>& session, const std::string& filename);
 
 // Session info
 void displayAllSessions(std::vector<Session> session);
