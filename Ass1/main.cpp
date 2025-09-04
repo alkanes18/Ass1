@@ -89,7 +89,7 @@ int main() {
             cout << "Password: ";
             pw = getMaskedPassword();
 
-            if (id == creds.organizerID && pw == creds.organizerPW) {
+            if (id == creds.ORGANIZERID && pw == creds.ORGANIZERPW) {
                 cout << "Organizer login successfully.\n";
                 organizerMenu(users, creds, session, merchandise);
             }
