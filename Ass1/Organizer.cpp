@@ -13,7 +13,7 @@ bool confirmOrganizerPassword(const SystemCredentials& creds) {
     string pw;
     cout << "\nEnter organizer password to continue: ";
     pw = getMaskedPassword();
-    return pw == creds.organizerPW;
+    return pw == creds.ORGANIZERPW;
 }
 
 void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<Session>& session, vector<Merchandise>& merchandise) {
@@ -124,15 +124,15 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                         cin.ignore(numeric_limits<streamsize>::max(), '\n');
                         if (confirm == 'y' || confirm == 'Y') {
                             resetSeats(session, "seats.txt");
-							break;
-						}
-						else if (confirm == 'n' || confirm == 'N') {
-							cout << "Reset cancelled.\n";
-							break; // Exit the confirmation loop and cancel reset.
-						}
-						else {
-							cout << "Invalid input. Please enter 'y' or 'n'.\n";
-						}
+                            break;
+                        }
+                        else if (confirm == 'n' || confirm == 'N') {
+                            cout << "Reset cancelled.\n";
+                            break; // Exit the confirmation loop and cancel reset.
+                        }
+                        else {
+                            cout << "Invalid input. Please enter 'y' or 'n'.\n";
+                        }
                     }
                     break;
                 case 5:
@@ -223,7 +223,7 @@ void printUserList(const vector<User>& users, const SystemCredentials& creds) {
 
     bool foundUsers = false;
     for (int i = 0; i < users.size(); i++) {
-        if (users[i].userID == creds.organizerID) {
+        if (users[i].userID == creds.ORGANIZERID) {
             continue;
         }
         foundUsers = true;
