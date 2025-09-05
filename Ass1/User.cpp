@@ -45,7 +45,6 @@ bool isValidPassword(const string& pw) {
     return hasUpper && hasLower && hasDigit && hasSymbol;
 }
 
-
 // Saves the entire 'users' list to a file.
 void saveUsersToFile(const vector<User>& users) {
     ofstream fout("user_data.txt");
@@ -74,12 +73,11 @@ vector<User> loadUsersFromFile() {
         getline(ss, tempUser.password, ',');
         getline(ss, blockedStr, ',');
 
-        // This is a clearer if-else version of the boolean assignment.
         if (blockedStr == "1") {
-            tempUser.isBlocked = true; // If the file stores "1", the account is blocked.
+            tempUser.isBlocked = true;
         }
         else {
-            tempUser.isBlocked = false; // Otherwise, it's active.
+            tempUser.isBlocked = false;
         }
 
         users.push_back(tempUser);
@@ -98,35 +96,33 @@ string generateUserID(int count) {
 string getMaskedPassword() {
     string password = "";
     char ch;
-    // _getch() reads a character directly from the keyboard without showing it.
     ch = _getch();
-    while (ch != 13) { // 13 is the ASCII code for the Enter key.
-        if (ch == 8) { // 8 is the ASCII code for the Backspace key.
+    while (ch != 13) {
+        if (ch == 8) {
             if (!password.empty()) {
-                password.pop_back(); // Remove the last character from the string.
-                cout << "\b \b";   // Move the cursor back, print a space, move back again.
+                password.pop_back();
+                cout << "\b \b";
             }
         }
         else {
-            password.push_back(ch); // Add the character to the end of the password string.
-            cout << '*';            // Display a star on the screen.
+            password.push_back(ch);
+            cout << '*';
         }
-        ch = _getch(); // Get the next character.
+        ch = _getch();
     }
-    cout << endl; // After the user presses Enter, move to the next line.
-    return password; // Return the complete password string.
+    cout << endl;
+    return password;
 }
 
 // Finds a user by their ID and returns their position (index) in the list.
 int findUserIndex(const vector<User>& users, const string& id) {
     for (int i = 0; i < users.size(); i++) {
         if (users[i].userID == id) {
-            return i; // Found it, return the index 'i'.
+            return i;
         }
     }
-    return -1; // If the loop finishes and nothing was found, return -1.
+    return -1;
 }
-
 
 // --- Comparison Functions for Sorting ---
 
@@ -137,7 +133,6 @@ bool compareByID(const User& a, const User& b) {
 bool compareByName(const User& a, const User& b) {
     return a.name < b.name;
 }
-
 
 // --- Core Feature Function Implementations ---
 
@@ -153,7 +148,14 @@ void registerUser(vector<User>& users) {
         getline(cin >> ws, newUser.name);
         if (!isValidName(newUser.name)) {
             cout << "Invalid name format. Return to main menu? (y/n): ";
-            cin >> backChoice; cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> backChoice;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Invalid input. Returning to main menu.\n";
+                return;
+            }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if (backChoice == 'y' || backChoice == 'Y') return;
         }
     } while (!isValidName(newUser.name));
@@ -164,7 +166,14 @@ void registerUser(vector<User>& users) {
         getline(cin, newUser.phone);
         if (!isValidPhone(newUser.phone)) {
             cout << "Invalid phone format. Return to main menu? (y/n): ";
-            cin >> backChoice; cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> backChoice;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Invalid input. Returning to main menu.\n";
+                return;
+            }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if (backChoice == 'y' || backChoice == 'Y') return;
         }
     } while (!isValidPhone(newUser.phone));
@@ -175,7 +184,14 @@ void registerUser(vector<User>& users) {
         getline(cin, newUser.email);
         if (!isValidEmail(newUser.email)) {
             cout << "Invalid email format. Return to main menu? (y/n): ";
-            cin >> backChoice; cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> backChoice;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Invalid input. Returning to main menu.\n";
+                return;
+            }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if (backChoice == 'y' || backChoice == 'Y') return;
         }
     } while (!isValidEmail(newUser.email));
@@ -189,14 +205,20 @@ void registerUser(vector<User>& users) {
         getline(cin, confirmPassword);
         if (!isValidPassword(newUser.password) || newUser.password != confirmPassword) {
             cout << "Invalid or mismatched password. Return to main menu? (y/n): ";
-            cin >> backChoice; cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> backChoice;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Invalid input. Returning to main menu.\n";
+                return;
+            }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if (backChoice == 'y' || backChoice == 'Y') return;
         }
     } while (!isValidPassword(newUser.password) || newUser.password != confirmPassword);
 
     newUser.userID = generateUserID(static_cast<int>(users.size()));
     users.push_back(newUser);
-    // Call the function to save the updated 'users' list to the file.
     saveUsersToFile(users);
     cout << "\nRegistered. Your User ID is: " << newUser.userID << endl;
 }
@@ -228,13 +250,13 @@ void editUserInfo(int userIndex, vector<User>& users) {
             do {
                 cout << "Enter new name (must contain letters and numbers, or '0' to cancel): ";
                 getline(cin, newName);
-                if (newName == "0") break; // Allow user to cancel
+                if (newName == "0") break;
                 if (!isValidName(newName)) {
                     cout << "Invalid name format. Please try again.\n";
                 }
-            } while (!isValidName(newName));
+            } while (!isValidName(newName) && newName != "0");
 
-            if (newName != "0") {
+            if (newName != "0" && isValidName(newName)) {
                 users[userIndex].name = newName;
                 infoUpdated = true;
             }
@@ -248,9 +270,9 @@ void editUserInfo(int userIndex, vector<User>& users) {
                 if (!isValidPhone(newPhone)) {
                     cout << "Invalid phone format. Please try again.\n";
                 }
-            } while (!isValidPhone(newPhone));
+            } while (!isValidPhone(newPhone) && newPhone != "0");
 
-            if (newPhone != "0") {
+            if (newPhone != "0" && isValidPhone(newPhone)) {
                 users[userIndex].phone = newPhone;
                 infoUpdated = true;
             }
@@ -264,9 +286,9 @@ void editUserInfo(int userIndex, vector<User>& users) {
                 if (!isValidEmail(newEmail)) {
                     cout << "Invalid email format. Please try again.\n";
                 }
-            } while (!isValidEmail(newEmail));
+            } while (!isValidEmail(newEmail) && newEmail != "0");
 
-            if (newEmail != "0") {
+            if (newEmail != "0" && isValidEmail(newEmail)) {
                 users[userIndex].email = newEmail;
                 infoUpdated = true;
             }
@@ -284,13 +306,16 @@ void editUserInfo(int userIndex, vector<User>& users) {
                 if (pw1 != pw2) cout << "Passwords do not match.\n";
                 else if (!isValidPassword(pw1)) cout << "Password is not strong enough.\n";
 
-            } while (pw1 != pw2 || !isValidPassword(pw1));
+            } while ((pw1 != pw2 || !isValidPassword(pw1)) && pw1 != "0");
 
-            if (pw1 != "0") {
+            if (pw1 != "0" && pw1 == pw2 && isValidPassword(pw1)) {
                 users[userIndex].password = pw1;
                 infoUpdated = true;
                 cout << "Password updated.\n";
             }
+        }
+        else if (choice != 5) {
+            cout << "Invalid option. Please select a number between 1 and 5.\n";
         }
 
         if (infoUpdated) {
@@ -309,6 +334,12 @@ void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vec
 
         int choice;
         cin >> choice;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number between 1 and 5.\n";
+            continue;
+        }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
@@ -320,10 +351,10 @@ void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vec
             cout << "Email    : " << users[userIndex].email << "\n";
             break;
         case 2:
-            editUserInfo(userIndex, users); // Call the newly implemented function
+            editUserInfo(userIndex, users);
             break;
         case 3:
-            displayTicketPurchaseMenu(userIndex, users, sessions, merchandise); // Call the new ticket purchase menu
+            displayTicketPurchaseMenu(userIndex, users, sessions, merchandise);
             break;
         case 4:
             displayOrderHistory(users[userIndex].userID);
@@ -332,7 +363,7 @@ void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vec
             cout << "Logging out...\n";
             return;
         default:
-            cout << "Invalid option.\n";
+            cout << "Invalid option. Please enter a number between 1 and 5.\n";
         }
     }
 }
