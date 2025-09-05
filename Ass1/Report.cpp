@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <limits> // for numeric_limits
 
 using namespace std;
 
@@ -15,7 +16,7 @@ void displayReportMenu() {
     cout << "| 1. View Summary Report           |" << endl;
     cout << "| 2. View Merchandise Report       |" << endl;
     cout << "| 3. View Session Detailed Report  |" << endl;
-    cout << "| 4. Write Report to File          | " << endl;
+    cout << "| 4. Write Report to File          |" << endl;
     cout << "| 5. Back to Menu                  |" << endl;
     cout << "+----------------------------------+" << endl;
     cout << "Your choice > ";
@@ -27,7 +28,14 @@ void runReportMenu(const vector<Session>& session, const vector<Merchandise>& me
 
     while (runningReportMenu) {
         displayReportMenu();
+
         cin >> reportOption;
+        if (cin.fail()) {
+            cin.clear(); // clear error flag
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // discard invalid input
+            cout << "Invalid input. Please enter a number between 1 and 5.\n";
+            continue;
+        }
 
         switch (reportOption) {
         case 1:
@@ -46,7 +54,7 @@ void runReportMenu(const vector<Session>& session, const vector<Merchandise>& me
             runningReportMenu = false;
             break;
         default:
-            cout << "Invalid option! Please type 1 - 2 only." << endl;
+            cout << "Invalid option! Please type a number between 1 and 5." << endl;
             continue;
         }
     }
@@ -55,7 +63,7 @@ void runReportMenu(const vector<Session>& session, const vector<Merchandise>& me
 void viewReport(const vector<Session>& session, const vector<Merchandise>& merchandise) {
     int totalVIPSeats = session.size() * 2 * 15;      // 30 VIP seats
     int totalStandardSeats = session.size() * 8 * 15; // 120 Standard seats
-    
+
     int totalTickets = 0;
     int soldVip = 0;
     int soldStandard = 0;
@@ -83,7 +91,7 @@ void viewReport(const vector<Session>& session, const vector<Merchandise>& merch
         soldStandard += session[i].standardTicketsSold;
         totalTickets += soldVip + soldStandard;
         ticketIncome += session[i].vipPrice * session[i].vipTicketsSold + session[i].standardPrice * session[i].standardTicketsSold;
-        cout << "Session " << i+1 << " - " << session[i].location << " (" << session[i].sessionID << ")" << ": " << (session[i].vipTicketsSold + session[i].standardTicketsSold) << endl;
+        cout << "Session " << i + 1 << " - " << session[i].location << " (" << session[i].sessionID << ")" << ": " << (session[i].vipTicketsSold + session[i].standardTicketsSold) << endl;
     }
     overallIncome = ticketIncome + merchandiseIncome;
 
@@ -100,7 +108,7 @@ void viewReport(const vector<Session>& session, const vector<Merchandise>& merch
     cout << "\n--- Additional Insights ---" << endl;
     cout << "VIP Tickets Sold        : " << soldVip << " (" << (static_cast<double>(soldVip) / totalVIPSeats) * 100 << "% occupancy)" << endl;
     cout << "Standard Tickets Sold   : " << soldStandard << " (" << (static_cast<double>(soldStandard) / totalStandardSeats) * 100 << "% occupancy)" << endl;
-    cout  << "Overall Occupancy      : " << fixed << setprecision(2) << (static_cast<double>(soldVip + soldStandard) / (totalVIPSeats + totalStandardSeats)) * 100.0 << "%" << endl;
+    cout << "Overall Occupancy      : " << fixed << setprecision(2) << (static_cast<double>(soldVip + soldStandard) / (totalVIPSeats + totalStandardSeats)) * 100.0 << "%" << endl;
 }
 
 void viewMerchReport(const vector<Merchandise>& merchandise) {
@@ -125,7 +133,7 @@ void viewMerchReport(const vector<Merchandise>& merchandise) {
 
     sort(summary.begin(), summary.end(), [](const ItemSummary& a, const ItemSummary& b) {
         return a.sold > b.sold;
-    });
+        });
 
     cout << "-------------------------------------------------------" << endl;
     cout << "Top-Selling Item: " << summary[0].name << " (" << summary[0].sold << " units, RM " << fixed << setprecision(2) << summary[0].income << ")" << endl;
