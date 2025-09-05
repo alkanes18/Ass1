@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <limits>   // Added for numeric_limits
 
 using namespace std;
 
@@ -48,11 +49,6 @@ string generateOrderID() {
     stringstream ss;
     ss << "ORD" << setfill('0') << setw(6) << number + 1;
     return ss.str();
-
-    /*static int orderCounter = 1;
-    stringstream ss;
-    ss << "ORD" << setfill('0') << setw(6) << orderCounter++;
-    return ss.str();*/
 }
 
 // Generate unique receipt ID
@@ -103,7 +99,6 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     string seatType;
     selectSeatType(seatType);
     if (seatType.empty()) return;
-
 
     // Step 4: Select seat
     int row, col;
@@ -197,7 +192,14 @@ void selectSession(vector<Session>& sessions, int& selectedSession) {
     }
 
     cout << "\nSelect session (1-" << sessions.size() << "): ";
-    cin >> selectedSession;
+
+    if (!(cin >> selectedSession)) {   // Error handling added
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Error: Invalid input. Please enter a number between 1 and " << sessions.size() << "." << endl;
+        selectedSession = -1;
+        return;
+    }
 
     if (selectedSession < 1 || selectedSession > sessions.size()) {
         cout << "Invalid session selection." << endl;
@@ -217,7 +219,13 @@ void selectSeatType(string& seatType) {
     cout << "Choice: ";
 
     int choice;
-    cin >> choice;
+    if (!(cin >> choice)) {   // Error handling added
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Error: Invalid input. Please enter 1 or 2." << endl;
+        seatType = "";
+        return;
+    }
 
     switch (choice) {
     case 1:
@@ -358,7 +366,12 @@ void displayMerchandiseMenu(vector<Merchandise>& merchandise, vector<Merchandise
 
         cout << "\nSelect item (0-" << merchandise.size() << "): ";
         int selection;
-        cin >> selection;
+        if (!(cin >> selection)) {   // Error handling added
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Error: Invalid input. Please enter a number between 0 and " << merchandise.size() << "." << endl;
+            continue;
+        }
 
         if (selection == 0) break;
 
