@@ -26,6 +26,13 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
 
         int choice;
         cin >> choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a number between 1 and 6.\n";
+            continue;
+        }
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         if (choice >= 2 && choice <= 5) {
@@ -35,7 +42,6 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             }
         }
 
-        int resetIndex = 0; // 1-based index for user
         switch (choice) {
         case 1:
             viewAllUsers(users, creds);
@@ -50,6 +56,13 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                 cout << "1. Block user\n2. Unblock user\n3. Cancel\nChoice: ";
                 int statusChoice;
                 cin >> statusChoice;
+
+                if (cin.fail()) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Invalid input. Please enter 1, 2, or 3.\n";
+                    break;
+                }
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                 if (statusChoice == 1) {
@@ -62,8 +75,11 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                     cout << "User has been unblocked.\n";
                     saveUsersToFile(users);
                 }
-                else {
+                else if (statusChoice == 3) {
                     cout << "Operation cancelled.\n";
+                }
+                else {
+                    cout << "Invalid option. Please enter 1, 2, or 3.\n";
                 }
             }
             else {
@@ -81,9 +97,7 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
 
             int index_to_delete = findUserIndex(users, id_to_delete);
 
-            if (index_to_delete != -1) { // If the user was found...
-                // users.begin() points to the start of the list.
-                // Adding the index gives the exact position to erase.
+            if (index_to_delete != -1) {
                 users.erase(users.begin() + index_to_delete);
                 saveUsersToFile(users);
                 cout << "User deleted.\n";
@@ -97,12 +111,14 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             while (runningSessionMenu1) {
                 displaySessionMenu1();
                 cin >> sessionMenuOption1;
+
                 if (cin.fail()) {
                     cin.clear();
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    cout << "Invalid input. Please enter a number.\n";
+                    cout << "Invalid input. Please enter a number between 1 and 6.\n";
                     continue;
                 }
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                 switch (sessionMenuOption1) {
                 case 1:
@@ -128,7 +144,7 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                         }
                         else if (confirm == 'n' || confirm == 'N') {
                             cout << "Reset cancelled.\n";
-                            break; // Exit the confirmation loop and cancel reset.
+                            break;
                         }
                         else {
                             cout << "Invalid input. Please enter 'y' or 'n'.\n";
@@ -150,9 +166,9 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             break;
         case 6:
             cout << "Returning to main menu...\n";
-            return; // Exit the organizer menu.
+            return;
         default:
-            cout << "Invalid choice.\n";
+            cout << "Invalid choice. Please enter 1 - 6.\n";
             break;
         }
     }
@@ -164,9 +180,8 @@ void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
         return;
     }
 
-    printUserList(users, creds); // Display the list for the first time.
+    printUserList(users, creds);
 
-    // This loop will continue asking until the user enters y, Y, n, or N.
     while (true) {
         char sortChoice;
         cout << "\nDo you want to sort this list? (y/n): ";
@@ -181,6 +196,13 @@ void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
 
             int choice;
             cin >> choice;
+
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Invalid input. Please enter 1, 2, or 3.\n";
+                continue;
+            }
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
             if (choice == 1) {
@@ -191,35 +213,40 @@ void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
                 sort(users.begin(), users.end(), compareByName);
                 cout << "Users sorted by Name.\n";
             }
+            else if (choice == 3) {
+                cout << "Returning...\n";
+                break;
+            }
+            else {
+                cout << "Invalid option. Please enter 1, 2, or 3.\n";
+                continue;
+            }
 
             if (choice == 1 || choice == 2) {
-                saveUsersToFile(users); // Save the sorted order.
+                saveUsersToFile(users);
                 cout << "\n--- Sorted User List ---\n";
-                printUserList(users, creds); // Display the sorted list.
+                printUserList(users, creds);
             }
-            break; // Exit the y/n loop.
+            break;
         }
         else if (sortChoice == 'n' || sortChoice == 'N') {
-            break; // Exit the y/n loop.
+            break;
         }
         else {
             cout << "Invalid input. Please enter 'y' or 'n'.\n";
-            // The loop will now repeat, asking the question again.
         }
     }
 }
 
-// Prints the formatted list of users to the console.
 void printUserList(const vector<User>& users, const SystemCredentials& creds) {
-    // Print the table header with corrected widths.
     cout << "\n" << left
         << setw(10) << "User ID"
         << setw(20) << "Name"
         << setw(14) << "Phone"
-        << setw(30) << "Email" // Increased width for email
-        << setw(20) << "Password" // Increased width for password
+        << setw(30) << "Email"
+        << setw(20) << "Password"
         << setw(9) << "Status" << endl;
-    cout << string(115, '-') << endl; // Adjusted the separator line width
+    cout << string(115, '-') << endl;
 
     bool foundUsers = false;
     for (int i = 0; i < users.size(); i++) {
@@ -227,10 +254,9 @@ void printUserList(const vector<User>& users, const SystemCredentials& creds) {
             continue;
         }
         foundUsers = true;
-        // Print each user's data, now including the name.
         cout << left
             << setw(10) << users[i].userID
-            << setw(20) << users[i].name // ADDED THE MISSING NAME COLUMN
+            << setw(20) << users[i].name
             << setw(14) << users[i].phone
             << setw(30) << users[i].email
             << setw(20) << users[i].password
