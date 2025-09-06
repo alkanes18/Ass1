@@ -19,11 +19,6 @@ void displayPaymentMethods() {
     cout << "0. Cancel Payment" << endl;
 }
 
-// Validate payment information
-bool validatePaymentInfo(const PaymentInfo& payment) {
-    return !(payment.paymentMethod.empty() || payment.cardNumber.empty() || payment.cardHolder.empty());
-}
-
 // Process payment
 void processPayment(Order& order, PaymentInfo& payment) {
     cout << "\n=== Payment Processing ===" << endl;
@@ -32,11 +27,12 @@ void processPayment(Order& order, PaymentInfo& payment) {
     int methodChoice;
     string input;
 
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover input
+
     // loop until valid choice or cancel
     while (true) {
         displayPaymentMethods();
         cout << "Select payment method (0-4): ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover input
         getline(cin, input);
 
         if (input.empty()) {
@@ -222,6 +218,17 @@ void saveOrderToFile(const Order& order) {
         file << "Payment Method : " << order.paymentMethod << "\n";
         file << "Payment Status : " << order.paymentStatus << "\n";
         file << "Order Date     : " << order.orderDate << "\n";
+
+        for (const auto& t : order.tickets) {
+            file << "Ticket ID      : " << t.ticketID
+                << " | Session ID: " << t.sessionID
+                << " | Seat Type: " << t.seatType
+                << " | Row: " << t.seatRow
+                << " | Col: " << t.seatCol
+                << " | Price: RM" << fixed << setprecision(2) << t.price
+                << "\n";
+        }
+
         file << "====================\n\n";
         file.close();
     }
@@ -241,11 +248,18 @@ void displayOrderHistory(const string& userID) {
         while (getline(file, line)) {
             if (line.find("User ID") != string::npos && line.find(userID) != string::npos) {
                 found = true;
+
+                // display Order ID line first
+                std::streamoff back = static_cast<std::streamoff>(line.length()) + 1; // +1 ????
+                file.seekg(-back, ios::cur);
+                getline(file, line); // Order ID
                 cout << line << endl;
-                for (int i = 0; i < 8 && getline(file, line); ++i) {
+
+                // then display the rest of the order details
+                while (getline(file, line) && line.find("====================") == string::npos) {
                     cout << line << endl;
                 }
-                cout << endl;
+                cout << line << endl << endl;
             }
         }
         file.close();

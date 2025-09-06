@@ -36,6 +36,9 @@
     <ClCompile Include="Report.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FeedbackX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="User.h">
@@ -54,6 +57,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Report.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeedbackX.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

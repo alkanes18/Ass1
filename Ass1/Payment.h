@@ -12,9 +12,9 @@ struct PaymentInfo {
 };
 
 void displayPaymentMethods();
-bool validatePaymentInfo(const PaymentInfo& payment);
 void processPayment(Order& order, PaymentInfo& payment);
 void generateReceipt(const Order& order, const PaymentInfo& payment);
+
 // Order history
 void saveOrderToFile(const Order& order);
 void displayOrderHistory(const std::string& userID);

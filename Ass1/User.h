@@ -24,7 +24,9 @@ bool isValidPassword(const std::string& pw);
 // User management
 void saveUsersToFile(const std::vector<User>& users);
 std::vector<User> loadUsersFromFile();
-std::string generateUserID(int count);
+int loadLastUserID();
+void saveLastUserID(int lastID);
+std::string generateUserID();
 std::string getMaskedPassword();
 int findUserIndex(const std::vector<User>& users, const std::string& id);
 

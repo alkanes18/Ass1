@@ -10,14 +10,15 @@
 using namespace std;
 
 void displaySessionMenu1() {
-    cout << "\nSession Menu (ORGANIZER ONLY)" << endl;
+    cout << "\n===== Session Menu (ORGANIZER ONLY) =====" << endl;
     cout << "+----------------------------+" << endl;
     cout << "| 1. Display All Sessions    |" << endl;
     cout << "| 2. Add New Session         |" << endl;
     cout << "| 3. Delete Session          |" << endl;
-    cout << "| 4. Reset Session           |" << endl;
-    cout << "| 5. Report Menu             | " << endl;
-    cout << "| 6. Exit Session Menu       |" << endl;
+    cout << "| 4. Edit Current Session    |" << endl;
+    cout << "| 5. Reset Session           |" << endl;
+    cout << "| 6. Report Menu             |" << endl;
+    cout << "| 7. Exit Session Menu       |" << endl;
     cout << "+----------------------------+" << endl;
     cout << "Your choice > ";
 }
@@ -31,6 +32,8 @@ void displaySessionMenu2() {
     cout << "Your choice > ";
 }
 
+// assume all seats are static (2 rows of VIP, 8 rows of Standard, 15 seats each row))
+// initialize seats for a single session
 void initializeSeats(Session& session) {
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 15; j++) {
@@ -44,8 +47,9 @@ void initializeSeats(Session& session) {
     }
 }
 
+// initialize seats for all sessions
 void initializeAllSeats(vector<Session>& session) {
-    for (int a = 0; a < session.size(); a++) {
+    for (size_t a = 0; a < session.size(); a++) {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 15; j++) {
                 session[a].vipSeats[i][j] = 'O';
@@ -61,14 +65,16 @@ void initializeAllSeats(vector<Session>& session) {
     }
 }
 
+// initialize session IDs for all sessions
 void initializeSessionID(vector<Session>& session) {
-    for (int i = 0; i < session.size(); i++) {
+    for (size_t i = 0; i < session.size(); i++) {
         stringstream ss;
         ss << "S" << setw(3) << setfill('0') << i + 1;
         session[i].sessionID = ss.str();
     }
 }
 
+// generate next session ID based on current number of sessions
 string generateSessionID(vector<Session>& session) {
     size_t nextID = session.size() + 1;
     stringstream ss;
@@ -76,6 +82,7 @@ string generateSessionID(vector<Session>& session) {
     return ss.str();
 }
 
+// save seats of all sessions to file to ensure that when the system terminate, the seats availability are persistence 
 void saveSeatsToFile(const vector<Session>& session) {
     ofstream file("seats.txt");
     if (!file.is_open()) {
@@ -108,6 +115,7 @@ void saveSeatsToFile(const vector<Session>& session) {
     file.close();
 }
 
+// load seats of all sessions from file
 void loadSeatsFromFile(vector<Session>& session) {
     ifstream file("seats.txt");
     if (!file.is_open()) {
@@ -115,17 +123,17 @@ void loadSeatsFromFile(vector<Session>& session) {
         return;
     }
 
-    string line;
-    int sessionIndex = -1;
-    int row = 0;
+    string line; // to hold each line read from the file
+    int sessionIndex = -1; // to track which session we are loading seats for
+    int row = 0; // to track the current row being read
 
     while (getline(file, line)) {
         if (line.find("SessionID:") != string::npos) {
-            string id = line.substr(line.find(":") + 1);
+            string id = line.substr(line.find(":") + 1); // get the session ID (behind of :)
 
-            id.erase(0, id.find_first_not_of(" \t"));
+            id.erase(0, id.find_first_not_of(" \t")); // skip the whitespaces
 
-            for (int i = 0; i < session.size(); i++) {
+            for (size_t i = 0; i < session.size(); i++) {
                 if (session[i].sessionID == id) {
                     sessionIndex = i;
                     row = 0;
@@ -152,48 +160,44 @@ void loadSeatsFromFile(vector<Session>& session) {
     }
 
     file.close();
-    cout << "Seats loaded successfully!\n";
 }
 
+// save all session details to file to ensure that when the system terminate, the session details are persistence
 void saveSessionsToFile(const vector<Session>& session) {
-	ofstream file("sessions.txt");
-	if (!file.is_open()) {
-		cout << "Error: Could not open sessions.txt for writing!\n";
-		return;
-	}
+    ofstream file("sessions.txt");
+    if (!file.is_open()) {
+        cout << "Error: Could not open sessions.txt for writing!\n";
+        return;
+    }
 
-	for (const auto& s : session) {
-		file << s.sessionID << "\n";
-		file << s.location << "\n";
-		file << s.time << "\n";
-		file << s.vipPrice << "\n";
-		file << s.standardPrice << "\n";
-		file << s.vipTicketsSold << "\n";
-		file << s.standardTicketsSold << "\n";
+    for (const auto& s : session) {
+        file << s.sessionID << "\n";
+        file << s.location << "\n";
+        file << s.time << "\n";
+        file << s.vipPrice << "\n";
+        file << s.standardPrice << "\n";
+        file << s.vipTicketsSold << "\n";
+        file << s.standardTicketsSold << "\n";
         file << "---\n";
-	}
+    }
 
-	file.close();
+    file.close();
 }
 
+// load all session details from file
 vector<Session> loadSessionsFromFile() {
-	vector<Session> sessions;
-	ifstream file("sessions.txt");
-	if (!file.is_open()) {
-		return sessions;
-	}
+    vector<Session> sessions;
+    ifstream file("sessions.txt");
+    if (!file.is_open()) {
+        return sessions;
+    }
 
     while (true) {
         Session s;
 
-        if (file.fail()) {
-            cout << "Warning: Corrupted session data in file.\n";
-            break;
-        }
-
         if (!(file >> s.sessionID)) break;
 
-        file.ignore(); 
+        file.ignore();
         getline(file, s.location);
         getline(file, s.time);
         file >> s.vipPrice;
@@ -208,10 +212,11 @@ vector<Session> loadSessionsFromFile() {
         sessions.push_back(s);
     }
 
-	file.close();
-	return sessions;
+    file.close();
+    return sessions;
 }
 
+// add a new session
 void addSession(vector<Session>& session) {
     Session newSession;
 
@@ -250,43 +255,44 @@ void addSession(vector<Session>& session) {
         cin >> choice;
 
         switch (choice) {
-            case 1:
-                newSession.vipPrice = 400.00;
-			    newSession.standardPrice = 150.00;
-			    askPrice = false;
-			    break;
-            case 2:
-                do {
-                    cout << "\nEnter the VIP ticket price (RM): ";
-                    cin >> newSession.vipPrice;
+        case 1:
+            newSession.vipPrice = 400.00;
+            newSession.standardPrice = 150.00;
+            askPrice = false;
+            break;
+        case 2:
+            do {
+                cout << "\nEnter the VIP ticket price (RM): ";
+                cin >> newSession.vipPrice;
 
-                    if (newSession.vipPrice <= 0) {
-                        cout << "Price cannot be negative or zero! Please enter again." << endl;
-                    }
+                if (newSession.vipPrice <= 0) {
+                    cout << "Price cannot be negative or zero! Please enter again." << endl;
+                }
 
-                } while (newSession.vipPrice <= 0);
-                do {
-                    cout << "Enter the Standard ticket price (RM): ";
-                    cin >> newSession.standardPrice;
+            } while (newSession.vipPrice <= 0);
+            do {
+                cout << "Enter the Standard ticket price (RM): ";
+                cin >> newSession.standardPrice;
 
-                    if (newSession.standardPrice < 0) {
-						cout << "Price cannot be negative or zero! Please enter again." << endl;
-					}
+                if (newSession.standardPrice < 0) {
+                    cout << "Price cannot be negative or zero! Please enter again." << endl;
+                }
 
-                } while (newSession.standardPrice < 0);
-				askPrice = false;
-				break;
-			default:
-				cout << "Invalid option! Please type 1 - 2 only." << endl;
-				cin.clear();
-				cin.ignore(numeric_limits<streamsize>::max(), '\n');
-				continue;
+            } while (newSession.standardPrice < 0);
+            askPrice = false;
+            break;
+        default:
+            cout << "Invalid option! Please type 1 - 2 only." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
         }
     }
     initializeSeats(newSession);
     confirmAdd(session, newSession);
 }
 
+// delete an existing session
 void deleteSession(vector<Session>& session) {
     cout << "\n\n===== Delete a Session =====" << endl;
     cout << "There are currently " << session.size() << " session(s) available." << endl << endl;
@@ -294,16 +300,14 @@ void deleteSession(vector<Session>& session) {
     displayAllSessions(session);
 
     cout << "Enter the session number to delete (1 - " << session.size() << "): ";
-
     int num;
     cin >> num;
 
-    int sold = session[num - 1].vipTicketsSold + session[num - 1].standardTicketsSold;
     if (num < 1 || num > session.size()) {
-        cout << "Cannot delete this session. " << sold << " tickets have already been booked." << endl;
+        cout << "Invalid session number. Return to menu..." << endl;
         return;
     }
-    
+
     if (hasBooking(session[num - 1])) {
         cout << "This session has bookings. Cannot delete the session." << endl;
         return;
@@ -312,42 +316,166 @@ void deleteSession(vector<Session>& session) {
     confirmDelete(session, num);
 }
 
-bool hasBooking(const Session& session) {
-	for (int r = 0; r < 2; r++) {
-		for (int c = 0; c < 15; c++) {
-			if (session.vipSeats[r][c] == 'X') {
-				return true;
-			}
-		}
-	}
+// edit an existing session
+void editCurrentSession(vector<Session>& session) {
+    if (session.empty()) {
+        cout << "No sessions available to edit.\n";
+        return;
+    }
 
-	for (int r = 0; r < 8; r++) {
-		for (int c = 0; c < 15; c++) {
-			if (session.standardSeats[r][c] == 'X') {
-				return true;
-			}
-		}
-	}
+    cout << "\n--- Edit Session ---\n";
+    for (size_t i = 0; i < session.size(); ++i) {
+        cout << i + 1 << ". " << session[i].sessionID
+            << " | " << session[i].location
+            << " | " << session[i].time
+            << " | VIP: " << session[i].vipPrice
+            << " | Standard: " << session[i].standardPrice << "\n";
+    }
 
-	return false;
+    int choice;
+    cout << "\nSelect a session to edit (1-" << session.size() << "): ";
+    cin >> choice;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    if (choice < 1 || choice >(int)session.size()) {
+        cout << "Invalid choice.\n";
+        return;
+    }
+
+    Session& s = session[choice - 1];
+
+    int option;
+    do {
+        cout << "\n--- Editing Session: " << s.sessionID << " ---" << endl;
+        cout << "1. Edit Location" << endl;
+        cout << "2. Edit Time" << endl;
+        cout << "3. Edit VIP Price" << endl;
+        cout << "4. Edit Standard Price" << endl;
+        cout << "5. Save and Exit" << endl;
+        cout << "0. Exit without Saving" << endl;
+        cout << "Choice: ";
+        cin >> option;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        string input;
+        switch (option) {
+        case 1:
+            cout << "Enter new Location: ";
+            getline(cin, input);
+            if (!input.empty()) s.location = input;
+            break;
+        case 2:
+            cout << "Enter new Time: ";
+            getline(cin, input);
+            if (!input.empty()) s.time = input;
+            break;
+        case 3:
+            cout << "Enter new VIP Price: ";
+            getline(cin, input);
+            if (!input.empty()) {
+                try {
+                    double newPrice = stod(input);
+                    if (newPrice < 0) {
+                        cout << "Price cannot be negative. Value not updated.\n";
+                    }
+                    else {
+                        s.vipPrice = newPrice;
+                    }
+                }
+                catch (...) {
+                    cout << "Invalid input. Price not updated.\n";
+                }
+            }
+            break;
+        case 4:
+            cout << "Enter new Standard Price: ";
+            getline(cin, input);
+            if (!input.empty()) {
+                try {
+                    double newPrice = stod(input);
+                    if (newPrice < 0) {
+                        cout << "Price cannot be negative. Value not updated.\n";
+                    }
+                    else {
+                        s.standardPrice = newPrice;
+                    }
+                }
+                catch (...) {
+                    cout << "Invalid input. Price not updated.\n";
+                }
+            }
+            break;
+        case 5:
+            char confirm;
+            cout << "Save changes? (y/n): ";
+            cin >> confirm;
+            if (confirm == 'y' || confirm == 'Y') {
+                saveSessionsToFile(session);
+                cout << "Changes saved successfully!\n";
+            }
+            else {
+                cout << "Changes discarded.\n";
+            }
+            break;
+        case 0:
+            cout << "Exiting without saving changes.\n";
+            break;
+        default:
+            cout << "Invalid choice.\n";
+        }
+    } while (option != 5 && option != 0);
 }
 
+// check if a session has any bookings (if has, cannot delete a session)
+bool hasBooking(const Session& session) {
+    for (int r = 0; r < 2; r++) {
+        for (int c = 0; c < 15; c++) {
+            if (session.vipSeats[r][c] == 'X') {
+                return true;
+            }
+        }
+    }
+
+    for (int r = 0; r < 8; r++) {
+        for (int c = 0; c < 15; c++) {
+            if (session.standardSeats[r][c] == 'X') {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// confirm addition of a new session
 void confirmAdd(vector<Session>& session, Session newSession) {
     char choice;
 
-    cout << "\nConfirm to add this session? (Y/N) > ";
-    cin >> choice;
+    // input validation
+    do {
+        cout << "\nConfirm to add this session? (Y/N) > ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear input buffer
+        choice = toupper(choice);
 
-    if (toupper(choice) == 'Y') {
+        if (choice != 'Y' && choice != 'N') {
+            cout << "Invalid choice. Please enter Y or N.\n";
+        }
+    } while (choice != 'Y' && choice != 'N');
+
+    // add session when confirmed
+    if (choice == 'Y') {
         session.push_back(newSession);
-        cout << "Session added successfully!" << endl;
+        cout << "Session added successfully!\n";
         saveSessionsToFile(session);
+        saveSeatsToFile(session);
     }
     else {
-        cout << "Operation cancelled." << endl;
+        cout << "Operation cancelled.\n";
     }
 }
 
+// confirm deletion of a session
 void confirmDelete(vector<Session>& session, int num) {
     char choice;
 
@@ -355,18 +483,32 @@ void confirmDelete(vector<Session>& session, int num) {
     cout << "ID          : " << session[num - 1].sessionID << endl;
     cout << "Location    : " << session[num - 1].location << endl;
     cout << "Date & Time : " << session[num - 1].time << endl;
-    cout << "(Y/N) > ";
-    cin >> choice;
 
-    if (toupper(choice) == 'Y') {
+    // input validation
+    do {
+        cout << "(Y/N) > ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear input buffer
+        choice = toupper(choice);
+
+        if (choice != 'Y' && choice != 'N') {
+            cout << "Invalid choice. Please enter Y or N." << endl;
+        }
+    } while (choice != 'Y' && choice != 'N');
+
+    // perform deletion when confirmed
+    if (choice == 'Y') {
         session.erase(session.begin() + (num - 1));
-        cout << "Session deleted successfully!" << endl;
+        cout << "Session deleted successfully!\n";
+        saveSessionsToFile(session);
+        saveSeatsToFile(session);
     }
     else {
-        cout << "Operation cancelled." << endl;
+        cout << "Operation cancelled.\n";
     }
 }
 
+// display seats for a specific session
 void displaySeats(Session session) {
     char rowLabel = 'A';
 
@@ -396,8 +538,9 @@ void displaySeats(Session session) {
     }
 }
 
+// display seats for all sessions
 void displayAllSeats(vector<Session> session) {
-    for (int a = 0; a < session.size(); a++) {
+    for (size_t a = 0; a < session.size(); a++) {
         char rowLabel = 'A';
 
         cout << "\n\nSeats for Session (" << a + 1 << "): " << session[a].location << endl;
@@ -428,7 +571,8 @@ void displayAllSeats(vector<Session> session) {
     }
 }
 
-bool isSeatAvailable(Session session, string seatType, int row, int col) {
+// check if a specific seat is available
+bool isSeatAvailable(const Session& session, string seatType, int row, int col) {
     if (seatType == "VIP") {
         if (row >= 0 && row < 2 && col >= 0 && col < 15) {
             return session.vipSeats[row][col] == 'O';
@@ -442,6 +586,7 @@ bool isSeatAvailable(Session session, string seatType, int row, int col) {
     return false; // Invalid input
 }
 
+// book a specific seat
 bool bookSeat(Session& session, string seatType, int row, int col) {
     if (!isSeatAvailable(session, seatType, row, col)) {
         return false;
@@ -456,43 +601,24 @@ bool bookSeat(Session& session, string seatType, int row, int col) {
     return true;
 }
 
-void resetSeats(vector<Session>& session, const string& filename) {
+// reset all seats in the file to 'O' (available)
+void resetSeats(vector<Session>& session) {
     initializeAllSeats(session);
-
-    ifstream inFile(filename);
-    if (!inFile) {
-        cout << "Failed to open file.\n";
-        return;
-    }
-
-    string content;
-    string line;
-    while (getline(inFile, line)) {
-        for (char& c : line) {
-            if (c == 'X') c = 'O';
-        }
-        content += line + "\n";
-    }
-    inFile.close();
-
-    ofstream outFile(filename);
-    outFile << content;
-    outFile.close();
-
-    cout << "All seats in file " << filename << " have been reset to 'O'.\n";
+    saveSeatsToFile(session);
+    cout << "All seats have been reset to 'O'.\n";
 }
 
+// display all sessions in a tabular format
 void displayAllSessions(vector<Session> session) {
-    Session searchSession;
-
     cout << endl << left << setw(5) << "No." << setw(14) << "Session ID" << setw(40) << "Location" << setw(20) << "Date (Time)" << endl;
     cout << "==================================================================================================" << endl;
-    for (int i = 0; i < session.size(); i++) {
+    for (size_t i = 0; i < session.size(); i++) {
         cout << left << setw(5) << i + 1 << setw(14) << session[i].sessionID << setw(40) << session[i].location << setw(20) << session[i].time << endl;
         cout << "--------------------------------------------------------------------------------------------------" << endl;
     }
 }
 
+// a while loop to run the session menu 2
 void runSessionMenu2(vector<Session> session) {
     int sessionMenuOption2 = 0;
     bool runningSessionMenu2 = true;
@@ -528,6 +654,7 @@ void runSessionMenu2(vector<Session> session) {
     }
 }
 
+// search for a session by its ID, return the index if found, otherwise return -1
 int searchForASession(vector<Session> session) {
     Session searchSession;
     string sessionID;
@@ -535,14 +662,16 @@ int searchForASession(vector<Session> session) {
     cout << "\nEnter the session ID: ";
     cin >> sessionID;
 
-    for (int i = 0; i < session.size(); i++) {
-        if (sessionID == session[i].sessionID) {
+    for (size_t i = 0; i < session.size(); i++) {
+        if (toupper(sessionID[0]) == toupper(session[i].sessionID[0]) &&
+            sessionID.substr(1) == session[i].sessionID.substr(1)) {
             return i;
         }
     }
     return -1;
 }
 
+// count remaining seats for a specific session
 void countRemainingSeats(Session session) {
     int standardCount = 0, vipCount = 0;
 
@@ -564,10 +693,11 @@ void countRemainingSeats(Session session) {
     cout << "Standard Seats Available Now: " << standardCount;
 }
 
+// count remaining seats for all sessions
 void countAllRemainingSeats(vector<Session> session) {
     int standardCount = 0, vipCount = 0;
 
-    for (int a = 0; a < session.size(); a++) {
+    for (size_t a = 0; a < session.size(); a++) {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 15; j++) {
                 if (session[a].vipSeats[i][j] == 'O') {

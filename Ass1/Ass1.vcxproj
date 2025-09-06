@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FeedbackX.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Organizer.cpp" />
     <ClCompile Include="Payment.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FeedbackX.h" />
     <ClInclude Include="Organizer.h" />
     <ClInclude Include="Payment.h" />
     <ClInclude Include="Report.h" />

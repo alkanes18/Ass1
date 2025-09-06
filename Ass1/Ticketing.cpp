@@ -48,19 +48,6 @@ string generateOrderID() {
     stringstream ss;
     ss << "ORD" << setfill('0') << setw(6) << number + 1;
     return ss.str();
-
-    /*static int orderCounter = 1;
-    stringstream ss;
-    ss << "ORD" << setfill('0') << setw(6) << orderCounter++;
-    return ss.str();*/
-}
-
-// Generate unique receipt ID
-string generateReceiptID() {
-    static int receiptCounter = 1;
-    stringstream ss;
-    ss << "RCP" << setfill('0') << setw(6) << receiptCounter++;
-    return ss.str();
 }
 
 string getCurrentDateTime() {
@@ -92,12 +79,13 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     cout << "Welcome, " << users[userIndex].name << "!" << endl;
 
     // Step 1: Select Session
-    int selectedSession = -1;
-    selectSession(sessions, selectedSession);
-    if (selectedSession == -1) return;
+    int idx = selectSession(sessions);
+    if (idx == -1) return;
+
+    string chosenSessionID = sessions[idx].sessionID;
 
     // Step 2: Display ticket prices
-    displayTicketPrices(sessions[selectedSession]);
+    displayTicketPrices(sessions[idx]);
 
     // Step 3: Select seat type
     string seatType;
@@ -107,18 +95,18 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
 
     // Step 4: Select seat
     int row, col;
-    selectSeat(sessions[selectedSession], seatType, row, col);
+    selectSeat(sessions[idx], seatType, row, col);
     if (row == -1 || col == -1) return;
 
     // Step 5: Create ticket
     Ticket ticket;
     ticket.ticketID = generateTicketID(seatType);
     ticket.userID = users[userIndex].userID;
-    ticket.sessionID = sessions[selectedSession].sessionID;
+    ticket.sessionID = chosenSessionID;
     ticket.seatType = seatType;
     ticket.seatRow = row;
     ticket.seatCol = col;
-    ticket.price = (seatType == "VIP") ? sessions[selectedSession].vipPrice : sessions[selectedSession].standardPrice;
+    ticket.price = (seatType == "VIP") ? sessions[idx].vipPrice : sessions[idx].standardPrice;
     ticket.purchaseDate = getCurrentDateTime();
     ticket.isPaid = false;
 
@@ -133,10 +121,10 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     order.username = users[userIndex].name;
     order.fullName = users[userIndex].name;
     order.concertName = "Spatula & Guitar Concert";
-    order.concertDate = sessions[selectedSession].time.substr(0, sessions[selectedSession].time.find(" ("));
-    order.concertTime = sessions[selectedSession].time.substr(sessions[selectedSession].time.find("(") + 1);
+    order.concertDate = sessions[idx].time.substr(0, sessions[idx].time.find(" ("));
+    order.concertTime = sessions[idx].time.substr(sessions[idx].time.find("(") + 1);
     order.concertTime = order.concertTime.substr(0, order.concertTime.find(")"));
-    order.location = sessions[selectedSession].location;
+    order.location = sessions[idx].location;
     order.tickets.push_back(ticket);
     order.merchandise = selectedMerchandise;
 
@@ -167,10 +155,10 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     }
 
     if (seatType == "VIP") {
-        sessions[selectedSession].vipTicketsSold++;
+        sessions[idx].vipTicketsSold++;
     }
     else {
-        sessions[selectedSession].standardTicketsSold++;
+        sessions[idx].standardTicketsSold++;
     }
 
     // Step 9: Generate receipt
@@ -188,7 +176,7 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
 }
 
 // Select session for booking
-void selectSession(vector<Session>& sessions, int& selectedSession) {
+int selectSession(vector<Session>& sessions) {
     cout << "\nAvailable Sessions:" << endl;
     cout << "==================" << endl;
 
@@ -196,17 +184,16 @@ void selectSession(vector<Session>& sessions, int& selectedSession) {
         cout << (i + 1) << ". " << sessions[i].location << " - " << sessions[i].time << endl;
     }
 
+    int choice;
     cout << "\nSelect session (1-" << sessions.size() << "): ";
-    cin >> selectedSession;
+    cin >> choice;
 
-    if (selectedSession < 1 || selectedSession > sessions.size()) {
+    if (choice < 1 || choice > sessions.size()) {
         cout << "Invalid session selection." << endl;
-        selectedSession = -1;
-        return;
+        return -1;
     }
 
-    selectedSession--; // Convert to 0-based index
-    cout << "Selected: " << sessions[selectedSession].location << " - " << sessions[selectedSession].time << endl;
+    return choice - 1;
 }
 
 // Select seat type
@@ -393,4 +380,87 @@ string seatName(int row, int col) {
     char rowLetter = 'A' + row;
     int colNumber = col + 1;
     return string(1, rowLetter) + to_string(colNumber);
+}
+
+void processTicketRefund(const string& userID, vector<Session>& sessions) {
+    // Load all orders for the user and check if any exist
+    vector<string> allOrdersForUser;
+    ifstream fin("order_history.txt");
+    string line;
+    while (getline(fin, line)) {
+        if (line.find("User ID") != string::npos && line.find(userID) != string::npos) {
+            allOrdersForUser.push_back(line);
+        }
+    }
+    fin.close();
+
+    // if no orders found, return
+    if (allOrdersForUser.empty()) {
+        cout << "No orders found for User ID: " << userID << ". Nothing to cancel.\n";
+        return;
+    }
+
+    displayOrderHistory(userID);
+
+    cout << "Enter Order ID to cancel (or 0 to abort): ";
+    string orderToCancel;
+    getline(cin, orderToCancel);
+    if (orderToCancel == "0") return;
+
+    vector<string> lines;
+    while (getline(fin, line)) lines.push_back(line);
+    fin.close();
+
+    vector<string> newLines;
+    bool skipBlock = false;
+
+    for (size_t i = 0; i < lines.size(); i++) {
+        if (lines[i].find("Order ID") != string::npos &&
+            lines[i].find(orderToCancel) != string::npos) {
+            skipBlock = true; // start skipping this order
+
+            // release seats
+            size_t j = i + 1;
+            while (j < lines.size() && lines[j] != "====================") {
+                if (lines[j].find("Ticket ID") != string::npos) {
+                    string sessionID, seatType;
+                    int row, col;
+
+                    // use find and substr to extract details
+                    size_t posSession = lines[j].find("Session ID: ");
+                    size_t posSeat = lines[j].find("Seat Type: ");
+                    size_t posRow = lines[j].find("Row: ");
+                    size_t posCol = lines[j].find("Col: ");
+
+                    if (posSession != string::npos && posSeat != string::npos &&
+                        posRow != string::npos && posCol != string::npos) {
+
+                        sessionID = lines[j].substr(posSession + 12, posSeat - (posSession + 15));
+                        seatType = lines[j].substr(posSeat + 11, posRow - (posSeat + 14));
+                        row = stoi(lines[j].substr(posRow + 5, posCol - (posRow + 5) - 3));
+                        col = stoi(lines[j].substr(posCol + 5));
+
+                        for (auto& s : sessions) {
+                            if (s.sessionID == sessionID) {
+                                if (seatType == "VIP") s.vipSeats[row][col] = 'O';
+                                else s.standardSeats[row - 2][col] = 'O';
+                            }
+                        }
+                    }
+                }
+                j++;
+            }
+        }
+
+        if (!skipBlock) newLines.push_back(lines[i]);
+        if (lines[i].find("====================") != string::npos) skipBlock = false; // end skipping
+    }
+
+    ofstream fout("order_history.txt", ios::trunc);
+    for (const auto& l : newLines) fout << l << "\n";
+    fout.close();
+
+    saveSeatsToFile(sessions);
+
+    cout << "Order " << orderToCancel << " cancelled and seats released successfully.\n";
 }

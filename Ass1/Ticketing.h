@@ -50,16 +50,16 @@ void initializeMerchandise(std::vector<Merchandise>& merchandise);
 // Ticket/Order IDs
 std::string generateTicketID(const std::string& seatType);
 std::string generateOrderID();
-std::string generateReceiptID();
 std::string getCurrentDateTime();
 
 // Ticket purchase flow
 void displayTicketPrices(const Session& session);
 void displayTicketPurchaseMenu(int userIndex, std::vector<User>& users, std::vector<Session>& sessions, std::vector<Merchandise>& merchandise);
-void selectSession(std::vector<Session>& sessions, int& selectedSession);
+int selectSession(std::vector<Session>& sessions);
 void selectSeatType(std::string& seatType);
 void selectSeat(Session& session, std::string seatType, int& row, int& col);
 
 // Merchandise
 void displayMerchandiseMenu(std::vector<Merchandise>& merchandise, std::vector<Merchandise>& selectedItems);
 std::string seatName(int row, int col);
+void processTicketRefund(const std::string& userID, std::vector<Session>& sessions);

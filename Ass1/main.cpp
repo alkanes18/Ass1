@@ -21,7 +21,6 @@ int main() {
         loadSeatsFromFile(session); // Load booked seats from file
     }
     else {
-        session = loadSessionsFromFile();
         initializeAllSeats(session);
         loadSeatsFromFile(session); // Load sessions from file
     }
@@ -89,7 +88,7 @@ int main() {
             cout << "Password: ";
             pw = getMaskedPassword();
 
-            if (id == creds.ORGANIZERID && pw == creds.ORGANIZERPW) {
+            if (id == creds.organizerID && pw == creds.organizerPW) {
                 cout << "Organizer login successfully.\n";
                 organizerMenu(users, creds, session, merchandise);
             }
@@ -99,6 +98,9 @@ int main() {
             break;
         }
         case 0:
+            saveUsersToFile(users);
+            saveSessionsToFile(session);
+            saveSeatsToFile(session);
             cout << "Thank you for using the system. Goodbye.\n";
             return 0; // Exit the program.
         default:
