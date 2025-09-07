@@ -1,0 +1,40 @@
+S001
+Kuala Lumpur, Malaysia
+17/9/2025 (7.30pm - 10.30pm)
+400
+150
+1
+0
+---
+S002
+Kuala Lumpur, Malaysia
+18/9/2025 (7.30pm - 10.30pm)
+400
+150
+1
+0
+---
+S003
+Singapore, Singapore
+21/9/2025 (8.00pm - 10.30pm)
+500
+200
+0
+0
+---
+S004
+Pulau Penang, Malaysia
+1/10/2025 (2.00pm - 4.30pm)
+420
+170
+0
+0
+---
+S005
+Ipoh, Perak
+18/9/2025 (4.30pm - 7.00pm)
+388
+188
+0
+0
+---
