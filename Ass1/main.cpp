@@ -6,6 +6,7 @@
 #include "Payment.h"
 #include "SessionBooking.h"
 #include "Report.h"
+#include "FeedbackX.h"   // <-- Added Feedback support
 
 using namespace std;
 
@@ -13,20 +14,24 @@ int main() {
     vector<User> users = loadUsersFromFile();
 
     vector<Session> session = loadSessionsFromFile();
-    if (session.empty()) { // If no sessions are loaded from file, initialize default sessions.
-        session = { {"", "Kuala Lumpur, Malaysia", "17/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00}, {"", "Kuala Lumpur, Malaysia", "18/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00},
-                    {"", "Singapore, Singapore", "21/9/2025 (8.00pm - 10.30pm)", 500.00, 200.00}, {"", "Pulau Penang, Malaysia", "1/10/2025 (2.00pm - 4.30pm)", 420.00, 170.00} };
+    if (session.empty()) {
+        session = {
+            {"", "Kuala Lumpur, Malaysia", "17/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00},
+            {"", "Kuala Lumpur, Malaysia", "18/9/2025 (7.30pm - 10.30pm)", 400.00, 150.00},
+            {"", "Singapore, Singapore", "21/9/2025 (8.00pm - 10.30pm)", 500.00, 200.00},
+            {"", "Pulau Penang, Malaysia", "1/10/2025 (2.00pm - 4.30pm)", 420.00, 170.00}
+        };
         initializeAllSeats(session);
         initializeSessionID(session);
-        loadSeatsFromFile(session); // Load booked seats from file
+        loadSeatsFromFile(session);
     }
     else {
         initializeAllSeats(session);
-        loadSeatsFromFile(session); // Load sessions from file
+        loadSeatsFromFile(session);
     }
 
     vector<Merchandise> merchandise;
-    initializeMerchandise(merchandise); // Initialize merchandise
+    initializeMerchandise(merchandise);
 
     SystemCredentials creds;
     int choice;
@@ -37,42 +42,55 @@ int main() {
 
         cin >> choice;
 
-        // Check if the user's input is a valid number.
         if (cin.fail()) {
-            cin.clear(); // Clear the error flag.
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the rest of the bad input.
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Invalid option. Please enter a number between 0 and 3.\n";
-            continue; // Skip the rest of this loop and start over.
+            continue;
         }
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the newline character after the number.
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
         case 1:
             registerUser(users);
             break;
-        case 2: { // User Login
+
+        case 2: {
             string id, pw;
             cout << "\n--- User Login ---\n";
             cout << "User ID: ";
             getline(cin, id);
             cout << "Password: ";
-
-            // Call the function to get the password with '*' masking.
             pw = getMaskedPassword();
 
-            // Call the function to find the user's position (index) in the list.
             int userIndex = findUserIndex(users, id);
 
-            // If the user was found (index is not -1) and the password is correct...
             if (userIndex != -1 && users[userIndex].password == pw) {
-                // Check if the account is blocked.
                 if (users[userIndex].isBlocked) {
                     cout << "Account is blocked.\n";
                 }
                 else {
-                    // Login successful, go to the user menu.
                     cout << "Login successful.\n";
                     userMenu(userIndex, users, session, merchandise);
+
+                    // After returning from user menu, ask if they want to leave feedback
+                    char fbChoice;
+                    cout << "\nDo you want to leave feedback? (y/n): ";
+                    cin >> fbChoice;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                    if (fbChoice == 'y' || fbChoice == 'Y') {
+                        FeedbackX fb;
+                        fb.feedbackID = generateFeedbackID();
+                        fb.userID = users[userIndex].userID;
+                        fb.userName = users[userIndex].name;
+                        cout << "Enter your feedback: ";
+                        getline(cin, fb.feedback);
+                        fb.timestamp = getCurrentTimestamp();
+
+                        saveFeedbackX(fb);
+                        cout << "Thank you! Your feedback has been saved.\n";
+                    }
                 }
             }
             else {
@@ -80,7 +98,8 @@ int main() {
             }
             break;
         }
-        case 3: { // Organizer Login
+
+        case 3: {
             string id, pw;
             cout << "\n--- Organizer Login ---\n";
             cout << "Organizer ID: ";
@@ -97,12 +116,14 @@ int main() {
             }
             break;
         }
+
         case 0:
             saveUsersToFile(users);
             saveSessionsToFile(session);
             saveSeatsToFile(session);
             cout << "Thank you for using the system. Goodbye.\n";
-            return 0; // Exit the program.
+            return 0;
+
         default:
             cout << "Invalid option. Please enter a number between 0 and 3.\n";
             break;
