@@ -1,16 +1,21 @@
 #pragma once
-#pragma once
-#include <vector>
 #include <string>
-using namespace std;
+#include <vector>
 
 struct FeedbackX {
-    string userID;
-    string userName;
-    string feedback;
+    std::string feedbackID;   // unique id (e.g., FB0001)
+    std::string userID;       // who submitted
+    std::string userName;     // display name
+    std::string feedback;     // message text
+    std::string timestamp;    // yyyy-mm-dd HH:MM:SS
 };
 
-// Functions
-void saveFeedbackX(const FeedbackX& fb);       // Save feedback to file
-vector<FeedbackX> loadAllFeedbackX();         // Load all feedback from file
-void viewAllFeedbackX();                       // Display all feedback
+// core API
+void saveFeedbackX(const FeedbackX& fb);
+std::vector<FeedbackX> loadAllFeedbackX();
+void viewAllFeedbackX();
+bool removeFeedbackX(const std::string& feedbackID);
+
+// helpers
+std::string generateFeedbackID();
+std::string getCurrentTimestamp();
