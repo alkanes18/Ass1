@@ -10,14 +10,15 @@
 
 using namespace std;
 
-bool confirmOrganizerPassword(const SystemCredentials& creds) {
+bool confirmOrganizerPassword(const SystemCredentials& creds) {   // Verify organizer password
     string pw;
     cout << "\nEnter organizer password to continue: ";
-    pw = getMaskedPassword();
-    return pw == creds.organizerPW;
+    pw = getMaskedPassword();                                     // Masked input with '*'
+    return pw == creds.organizerPW;                               // Compare with stored password
 }
 
 void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<Session>& session, vector<Merchandise>& merchandise) {
+    // Main organizer menu controlling all admin-level functions
     int sessionMenuOption1 = 0;
 
     while (true) {
@@ -28,7 +29,7 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
         cin >> choice;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        if (cin.fail()) {
+        if (cin.fail()) {                                         // Handle invalid input
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Invalid input. Please enter a number between 1 and 7.\n";
@@ -36,32 +37,31 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
         }
 
         if (choice >= 2 && choice <= 5 && !confirmOrganizerPassword(creds)) {
+            // Require organizer password again for sensitive options
             cout << "Incorrect password. Returning to organizer menu.\n";
             continue;
         }
 
         switch (choice) {
-        case 1:
+        case 1:                                                   // View all users
             viewAllUsers(users, creds);
             break;
-        case 2: { // Manage User Status
+        case 2: {                                                 // Block/unblock user
             cout << "Enter User ID to manage status: ";
             string id;
             getline(cin, id);
             int userIndex = findUserIndex(users, id);
             if (userIndex != -1) {
-                cout << "\nUser: " << users[userIndex].name << " | Current status: " << (users[userIndex].isBlocked ? "Blocked" : "Active") << endl;
+                cout << "\nUser: " << users[userIndex].name
+                    << " | Current status: "
+                    << (users[userIndex].isBlocked ? "Blocked" : "Active") << endl;
                 cout << "1. Block user\n2. Unblock user\n3. Cancel\nChoice: ";
                 int statusChoice;
                 cin >> statusChoice;
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-                if (statusChoice == 1) {
-                    users[userIndex].isBlocked = true;
-                }
-                else if (statusChoice == 2) {
-                    users[userIndex].isBlocked = false;
-                }
+                if (statusChoice == 1) users[userIndex].isBlocked = true;
+                else if (statusChoice == 2) users[userIndex].isBlocked = false;
                 else if (statusChoice == 3) {
                     cout << "Operation cancelled.\n";
                     break;
@@ -71,7 +71,7 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                     break;
                 }
 
-                saveUsersToFile(users);
+                saveUsersToFile(users);                           // Save updated status
                 cout << "User status updated.\n";
             }
             else {
@@ -79,20 +79,18 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             }
             break;
         }
-        case 3:
+        case 3:                                                   // Add/register user
             registerUser(users);
             break;
-        case 4: { // Delete User
+        case 4: {                                                 // Delete user
             cout << "Enter User ID to delete: ";
             string id_to_delete;
             getline(cin, id_to_delete);
 
             int index_to_delete = findUserIndex(users, id_to_delete);
 
-            if (index_to_delete != -1) { // If the user was found...
-                // users.begin() points to the start of the list.
-                // Adding the index gives the exact position to erase.
-                users.erase(users.begin() + index_to_delete);
+            if (index_to_delete != -1) {
+                users.erase(users.begin() + index_to_delete);     // Remove from vector
                 saveUsersToFile(users);
                 cout << "User deleted.\n";
             }
@@ -101,10 +99,10 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
             }
             break;
         }
-        case 5: {
+        case 5: {                                                 // Session management submenu
             bool runningSessionMenu1 = true;
             while (runningSessionMenu1) {
-                displaySessionMenu1();
+                displaySessionMenu1();                            // Show session submenu
                 cin >> sessionMenuOption1;
                 if (cin.fail()) {
                     cin.clear();
@@ -114,21 +112,21 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                 }
 
                 switch (sessionMenuOption1) {
-                case 1:
+                case 1:                                           // View and manage sessions
                     displayAllSessions(session);
                     runSessionMenu2(session);
                     break;
-                case 2:
+                case 2:                                           // Add new session
                     addSession(session);
                     saveSeatsToFile(session);
                     break;
-                case 3:
+                case 3:                                           // Delete session
                     deleteSession(session);
                     break;
-                case 4:
+                case 4:                                           // Edit session
                     editCurrentSession(session);
                     break;
-                case 5:
+                case 5: {                                         // Reset seats confirmation
                     while (true) {
                         char confirm;
                         cout << "Are you sure you want to reset all seats? (y/n): ";
@@ -140,33 +138,34 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
                         }
                         else if (confirm == 'n' || confirm == 'N') {
                             cout << "Reset cancelled.\n";
-                            break; // Exit the confirmation loop and cancel reset.
+                            break;
                         }
                         else {
                             cout << "Invalid input. Please enter 'y' or 'n'.\n";
                         }
                     }
                     break;
-                case 6:
+                }
+                case 6:                                           // Run reports
                     runReportMenu(session, merchandise);
                     break;
-                case 7:
+                case 7:                                           // Exit session menu
                     cout << "Exiting Session Menu...\n";
                     runningSessionMenu1 = false;
                     break;
                 default:
-                    cout << "Invalid option! Please type 1 - 6 only." << endl;
+                    cout << "Invalid option! Please type 1 - 7 only." << endl;
                     continue;
                 }
             }
             break;
         }
-        case 6:
-            viewAllFeedbackX(); // show feedback
+        case 6:                                                   // View all feedback
+            viewAllFeedbackX();
             break;
-        case 7:
+        case 7:                                                   // Back to main menu
             cout << "Returning to main menu...\n";
-            return; // Exit the organizer menu.
+            return;
         default:
             cout << "Invalid choice. Please enter 1-7.\n";
             break;
@@ -175,14 +174,15 @@ void organizerMenu(vector<User>& users, const SystemCredentials& creds, vector<S
 }
 
 void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
+    // Display all users in a formatted table, with option to sort
+
     if (users.empty()) {
         cout << "No registered users found.\n";
         return;
     }
 
-    printUserList(users, creds); // Display the list for the first time.
+    printUserList(users, creds);                                 // Print user list
 
-    // This loop will continue asking until the user enters y, Y, n, or N.
     while (true) {
         char sortChoice;
         cout << "\nDo you want to sort this list? (y/n): ";
@@ -200,11 +200,11 @@ void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
             if (choice == 1) {
-                sort(users.begin(), users.end(), compareByID);
+                sort(users.begin(), users.end(), compareByID);   // Sort by ID
                 cout << "Users sorted by User ID.\n";
             }
             else if (choice == 2) {
-                sort(users.begin(), users.end(), compareByName);
+                sort(users.begin(), users.end(), compareByName); // Sort by Name
                 cout << "Users sorted by Name.\n";
             }
             else if (choice == 3) {
@@ -216,47 +216,46 @@ void viewAllUsers(vector<User>& users, const SystemCredentials& creds) {
                 continue;
             }
 
-            saveUsersToFile(users);
+            saveUsersToFile(users);                              // Save sorted order
             cout << "\n--- Sorted User List ---\n";
             printUserList(users, creds);
             break;
         }
         else if (sortChoice == 'n' || sortChoice == 'N') {
-            break; // Exit the y/n loop.
+            break;
         }
         else {
             cout << "Invalid input. Please enter 'y' or 'n'.\n";
-            // The loop will now repeat, asking the question again.
         }
     }
 }
 
-// Prints the formatted list of users to the console.
 void printUserList(const vector<User>& users, const SystemCredentials& creds) {
-    // Print the table header with corrected widths.
+    // Nicely print all users with columns
+
     cout << "\n" << left
         << setw(10) << "User ID"
         << setw(20) << "Name"
         << setw(14) << "Phone"
-        << setw(30) << "Email" // Increased width for email
-        << setw(20) << "Password" // Increased width for password
+        << setw(30) << "Email"
+        << setw(20) << "Password"
         << setw(9) << "Status" << endl;
-    cout << string(115, '-') << endl; // Adjusted the separator line width
+    cout << string(115, '-') << endl;
 
     bool foundUsers = false;
     for (int i = 0; i < users.size(); i++) {
-        if (users[i].userID == creds.organizerID) {
+        if (users[i].userID == creds.organizerID) {              // Skip organizer account itself
             continue;
         }
         foundUsers = true;
-        // Print each user's data, now including the name.
         cout << left
             << setw(10) << users[i].userID
-            << setw(20) << users[i].name // ADDED THE MISSING NAME COLUMN
+            << setw(20) << users[i].name
             << setw(14) << users[i].phone
             << setw(30) << users[i].email
-            << setw(20) << users[i].password
-            << setw(9) << (users[i].isBlocked ? "Blocked" : "Active") << endl;
+            << setw(20) << "********"                            // Masked password
+            << setw(9) << (users[i].isBlocked ? "Blocked" : "Active")
+            << endl;
     }
     if (!foundUsers) {
         cout << "No users found.\n";
