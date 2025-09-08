@@ -158,9 +158,11 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
     }
 
     if (seatType == "VIP") {
+		purchaseSeat(sessions[idx], "VIP", row, col);
         sessions[idx].vipTicketsSold++;
     }
     else {
+		purchaseSeat(sessions[idx], "Standard", row - 2, col);
         sessions[idx].standardTicketsSold++;
     }
 
@@ -312,14 +314,9 @@ void selectSeat(Session& session, string seatType, int& row, int& col) {
         }
 
         // Book the seat
-        if (bookSeat(session, seatType, adjustedRow, col)) {
-            cout << "Seat " << seatName(originalRow, col) << " selected successfully!" << endl;
-            row = originalRow;
-            return;
-        }
-        else {
-            cout << "Error: Booking failed, please try again.\n";
-        }
+        row = originalRow;
+        cout << "Seat " << seatName(originalRow, col) << " selected successfully (not booked yet)!" << endl;
+        return;
     }
 }
 
@@ -499,7 +496,7 @@ void processTicketRefund(const string& userID, vector<Session>& sessions) {
         size_t last = value.find_last_not_of(' ');
         if (first == string::npos) return "";
         return value.substr(first, last - first + 1);
-    };
+        };
 
     string sessionID = extractField("Session ID: ");
     string seatType = extractField("Seat Type: ");
@@ -526,13 +523,16 @@ void processTicketRefund(const string& userID, vector<Session>& sessions) {
                 int r = rowOriginal; // VIP rows stored as 0-1
                 if (r >= 0 && r < 2 && col >= 0 && col < 15) {
                     s.vipSeats[r][col] = 'O';
+					s.vipTicketsSold = max(0, s.vipTicketsSold - 1);
                     released = true;
                 }
-            } else {
+            }
+            else {
                 // Standard rows stored as 0-7, original A-J => C-J => 2-9
                 int r = rowOriginal - 2;
                 if (r >= 0 && r < 8 && col >= 0 && col < 15) {
                     s.standardSeats[r][col] = 'O';
+					s.standardTicketsSold = max(0, s.standardTicketsSold - 1);
                     released = true;
                 }
             }

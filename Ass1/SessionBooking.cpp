@@ -117,49 +117,46 @@ void saveSeatsToFile(const vector<Session>& session) {
 
 // load seats of all sessions from file
 void loadSeatsFromFile(vector<Session>& session) {
-    ifstream file("seats.txt");
-    if (!file.is_open()) {
-        cout << "No previous seat data found, starting fresh.\n";
-        return;
-    }
+    ifstream file("seats.txt"); 
+    if (!file.is_open()) { 
+        cout << "No previous seat data found, starting fresh.\n"; 
+        return; 
+    } 
 
-    string line; // to hold each line read from the file
-    int sessionIndex = -1; // to track which session we are loading seats for
-    int row = 0; // to track the current row being read
-
-    while (getline(file, line)) {
-        if (line.find("SessionID:") != string::npos) {
-            string id = line.substr(line.find(":") + 1); // get the session ID (behind of :)
-
-            id.erase(0, id.find_first_not_of(" \t")); // skip the whitespaces
-
-            for (size_t i = 0; i < session.size(); i++) {
-                if (session[i].sessionID == id) {
-                    sessionIndex = i;
-                    row = 0;
-                    break;
-                }
-            }
-        }
-        else if (line == "END") {
-            sessionIndex = -1; // reset for next session
-        }
-        else if (sessionIndex != -1) {
-            if (row < 2) { // VIP
-                for (int c = 0; c < 15; c++) {
-                    session[sessionIndex].vipSeats[row][c] = line[c];
-                }
-            }
-            else { // Standard
-                for (int c = 0; c < 15; c++) {
-                    session[sessionIndex].standardSeats[row - 2][c] = line[c];
-                }
-            }
-            row++;
-        }
-    }
-
-    file.close();
+    string line; // to hold each line read from the file 
+    int sessionIndex = -1; // to track which session we are loading seats for 
+    int row = 0; // to track the current row being read 
+    
+    while (getline(file, line)) { 
+        if (line.find("SessionID:") != string::npos) { 
+            string id = line.substr(line.find(":") + 1); // get the session ID (behind of :) 
+            
+            id.erase(0, id.find_first_not_of(" \t")); // skip the whitespaces 
+            
+            for (size_t i = 0; i < session.size(); i++) { 
+                if (session[i].sessionID == id) { 
+                    sessionIndex = i; 
+                    row = 0; break; 
+                } 
+            } 
+        } 
+        else if (line == "END") { 
+            sessionIndex = -1; // reset for next session 
+        } else if (sessionIndex != -1) { 
+            if (row < 2) { // VIP 
+                for (int c = 0; c < 15; c++) { 
+                    session[sessionIndex].vipSeats[row][c] = line[c]; 
+                } 
+            } else { // Standard 
+                for (int c = 0; c < 15; c++) { 
+                    session[sessionIndex].standardSeats[row - 2][c] = line[c]; 
+                } 
+            } 
+            row++; 
+        } 
+    } 
+    
+    file.close(); 
 }
 
 // save all session details to file to ensure that when the system terminate, the session details are persistence
@@ -586,8 +583,8 @@ bool isSeatAvailable(const Session& session, string seatType, int row, int col) 
     return false; // Invalid input
 }
 
-// book a specific seat
-bool bookSeat(Session& session, string seatType, int row, int col) {
+// purchase a specific seat
+bool purchaseSeat(Session& session, string seatType, int row, int col) {
     if (!isSeatAvailable(session, seatType, row, col)) {
         return false;
     }

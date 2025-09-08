@@ -9,8 +9,8 @@
 
 // Defines the credentials for the system organizer.
 struct SystemCredentials {
-    const std::string organizerID = "ORG001";
-    const std::string organizerPW = "594088";
+    const std::string organizerID = "11";
+    const std::string organizerPW = "11";
 };
 
 bool confirmOrganizerPassword(const SystemCredentials& creds);
