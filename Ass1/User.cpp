@@ -328,6 +328,7 @@ void editUserInfo(int userIndex, vector<User>& users) {
 }
 
 void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vector<Merchandise>& merchandise) {
+    bool hasLeftFeedbackThisSession = false;
     while (true) {
         cout << "\n--- User Menu ---\n";
         cout << "Welcome, " << users[userIndex].name << "!\n";
@@ -376,36 +377,39 @@ void userMenu(int userIndex, vector<User>& users, vector<Session>& sessions, vec
             } while (fb.feedback.empty());
             saveFeedbackX(fb);
             cout << "Thank you! Your feedback has been recorded.\n";
+            hasLeftFeedbackThisSession = true;
         }
               break;
         case 7: {
             cout << "Logging out...\n";
-            char fbChoice;
-            while (true) {
-                cout << "Do you want to leave feedback? (y/n): ";
-                cin >> fbChoice;
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                if (fbChoice == 'y' || fbChoice == 'Y') {
-                    FeedbackX fb;
-                    fb.userID = users[userIndex].userID;
-                    fb.userName = users[userIndex].name;
-                    do {
-                        cout << "Enter your feedback: ";
-                        getline(cin, fb.feedback);
-                        if (fb.feedback.empty()) {
-                            cout << "Feedback cannot be empty. Please try again.\n";
-                        }
-                    } while (fb.feedback.empty());
-                    saveFeedbackX(fb);
-                    cout << "Thank you! Your feedback has been recorded.\n";
-                    break;
-                }
-                else if (fbChoice == 'n' || fbChoice == 'N') {
-                    cout << "Okay, no feedback submitted.\n";
-                    break;
-                }
-                else {
-                    cout << "Invalid choice. Please enter 'y' or 'n'.\n";
+            if (!hasLeftFeedbackThisSession) {
+                char fbChoice;
+                while (true) {
+                    cout << "Do you want to leave feedback? (y/n): ";
+                    cin >> fbChoice;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    if (fbChoice == 'y' || fbChoice == 'Y') {
+                        FeedbackX fb;
+                        fb.userID = users[userIndex].userID;
+                        fb.userName = users[userIndex].name;
+                        do {
+                            cout << "Enter your feedback: ";
+                            getline(cin, fb.feedback);
+                            if (fb.feedback.empty()) {
+                                cout << "Feedback cannot be empty. Please try again.\n";
+                            }
+                        } while (fb.feedback.empty());
+                        saveFeedbackX(fb);
+                        cout << "Thank you! Your feedback has been recorded.\n";
+                        break;
+                    }
+                    else if (fbChoice == 'n' || fbChoice == 'N') {
+                        cout << "Okay, no feedback submitted.\n";
+                        break;
+                    }
+                    else {
+                        cout << "Invalid choice. Please enter 'y' or 'n'.\n";
+                    }
                 }
             }
             return;

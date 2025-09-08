@@ -9,6 +9,9 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <algorithm>
+#include <ctime>
+#include <cctype>
 
 using namespace std;
 
@@ -383,84 +386,206 @@ string seatName(int row, int col) {
 }
 
 void processTicketRefund(const string& userID, vector<Session>& sessions) {
-    // Load all orders for the user and check if any exist
-    vector<string> allOrdersForUser;
-    ifstream fin("order_history.txt");
+    // Check that this user has any orders
+    vector<string> anyLines;
     string line;
-    while (getline(fin, line)) {
-        if (line.find("User ID") != string::npos && line.find(userID) != string::npos) {
-            allOrdersForUser.push_back(line);
+    {
+        ifstream checkFile("order_history.txt");
+        while (getline(checkFile, line)) {
+            anyLines.push_back(line);
         }
     }
-    fin.close();
 
-    // if no orders found, return
-    if (allOrdersForUser.empty()) {
-        cout << "No orders found for User ID: " << userID << ". Nothing to cancel.\n";
+    bool hasOrderForUser = false;
+    for (const auto& l : anyLines) {
+        if (l.find("User ID") != string::npos && l.find(userID) != string::npos) {
+            hasOrderForUser = true;
+            break;
+        }
+    }
+    if (!hasOrderForUser) {
+        cout << "No orders found for User ID: " << userID << ". Nothing to refund.\n";
         return;
     }
 
     displayOrderHistory(userID);
 
-    cout << "Enter Order ID to cancel (or 0 to abort): ";
-    string orderToCancel;
-    getline(cin, orderToCancel);
-    if (orderToCancel == "0") return;
+    cout << "\nEnter Order ID to refund (or 0 to abort): ";
+    string orderID;
+    getline(cin, orderID);
+    if (orderID == "0") return;
 
-    vector<string> lines;
-    while (getline(fin, line)) lines.push_back(line);
-    fin.close();
+    // Load entire file
+    vector<string> lines = move(anyLines);
 
-    vector<string> newLines;
-    bool skipBlock = false;
-
+    // Locate the selected order block and ensure it belongs to user
+    size_t orderStart = string::npos;
+    size_t orderEnd = string::npos;
     for (size_t i = 0; i < lines.size(); i++) {
-        if (lines[i].find("Order ID") != string::npos &&
-            lines[i].find(orderToCancel) != string::npos) {
-            skipBlock = true; // start skipping this order
-
-            // release seats
+        if (lines[i].find("Order ID") != string::npos && lines[i].find(orderID) != string::npos) {
+            // Verify belongs to user and find end
             size_t j = i + 1;
-            while (j < lines.size() && lines[j] != "====================") {
-                if (lines[j].find("Ticket ID") != string::npos) {
-                    string sessionID, seatType;
-                    int row, col;
-
-                    // use find and substr to extract details
-                    size_t posSession = lines[j].find("Session ID: ");
-                    size_t posSeat = lines[j].find("Seat Type: ");
-                    size_t posRow = lines[j].find("Row: ");
-                    size_t posCol = lines[j].find("Col: ");
-
-                    if (posSession != string::npos && posSeat != string::npos &&
-                        posRow != string::npos && posCol != string::npos) {
-
-                        sessionID = lines[j].substr(posSession + 12, posSeat - (posSession + 15));
-                        seatType = lines[j].substr(posSeat + 11, posRow - (posSeat + 14));
-                        row = stoi(lines[j].substr(posRow + 5, posCol - (posRow + 5) - 3));
-                        col = stoi(lines[j].substr(posCol + 5));
-
-                        for (auto& s : sessions) {
-                            if (s.sessionID == sessionID) {
-                                if (seatType == "VIP") s.vipSeats[row][col] = 'O';
-                                else s.standardSeats[row - 2][col] = 'O';
-                            }
-                        }
-                    }
+            bool belongs = false;
+            while (j < lines.size() && lines[j].find("====================") == string::npos) {
+                if (lines[j].find("User ID") != string::npos && lines[j].find(userID) != string::npos) {
+                    belongs = true;
                 }
                 j++;
             }
+            if (!belongs) {
+                cout << "Error: Order does not belong to current user.\n";
+                return;
+            }
+            orderStart = i;
+            orderEnd = (j < lines.size() ? j : lines.size() - 1);
+            break;
         }
-
-        if (!skipBlock) newLines.push_back(lines[i]);
-        if (lines[i].find("====================") != string::npos) skipBlock = false; // end skipping
     }
 
-    ofstream fout("order_history.txt", ios::trunc);
-    for (const auto& l : newLines) fout << l << "\n";
-    fout.close();
+    if (orderStart == string::npos) {
+        cout << "Error: Order ID not found.\n";
+        return;
+    }
 
+    // Collect ticket lines within this order
+    vector<size_t> ticketLineIdx;
+    for (size_t k = orderStart + 1; k < orderEnd; k++) {
+        if (lines[k].find("Ticket ID") != string::npos) {
+            ticketLineIdx.push_back(k);
+        }
+    }
+
+    if (ticketLineIdx.empty()) {
+        cout << "No tickets found in this order to refund.\n";
+        return;
+    }
+
+    // Display tickets with numbering
+    cout << "\nTickets in Order " << orderID << ":\n";
+    for (size_t t = 0; t < ticketLineIdx.size(); t++) {
+        cout << (t + 1) << ") " << lines[ticketLineIdx[t]] << "\n";
+    }
+
+    // Choose a ticket to refund
+    cout << "Select ticket number to refund (1-" << ticketLineIdx.size() << ") or 0 to abort: ";
+    string selInput;
+    getline(cin, selInput);
+    if (selInput == "0") return;
+    size_t choice = 0;
+    try {
+        choice = static_cast<size_t>(stoi(selInput));
+    }
+    catch (...) {
+        cout << "Invalid selection.\n";
+        return;
+    }
+    if (choice < 1 || choice > ticketLineIdx.size()) {
+        cout << "Invalid selection.\n";
+        return;
+    }
+
+    size_t lineIdx = ticketLineIdx[choice - 1];
+    const string& ticketLine = lines[lineIdx];
+
+    auto extractField = [&](const string& label) -> string {
+        size_t pos = ticketLine.find(label);
+        if (pos == string::npos) return "";
+        pos += label.size();
+        size_t delim = ticketLine.find(" |", pos);
+        if (delim == string::npos) delim = ticketLine.size();
+        string value = ticketLine.substr(pos, delim - pos);
+        // trim leading/trailing spaces
+        size_t first = value.find_first_not_of(' ');
+        size_t last = value.find_last_not_of(' ');
+        if (first == string::npos) return "";
+        return value.substr(first, last - first + 1);
+    };
+
+    string sessionID = extractField("Session ID: ");
+    string seatType = extractField("Seat Type: ");
+    string rowStr = extractField("Row: ");
+    string colStr = extractField("Col: ");
+
+    // Parse row/col to integers
+    int rowOriginal = -1;
+    int col = -1;
+    try {
+        rowOriginal = stoi(rowStr);
+        col = stoi(colStr);
+    }
+    catch (...) {
+        cout << "Error parsing ticket seat info.\n";
+        return;
+    }
+
+    // Translate to storage indices and release seat
+    bool released = false;
+    for (auto& s : sessions) {
+        if (s.sessionID == sessionID) {
+            if (seatType == "VIP") {
+                int r = rowOriginal; // VIP rows stored as 0-1
+                if (r >= 0 && r < 2 && col >= 0 && col < 15) {
+                    s.vipSeats[r][col] = 'O';
+                    released = true;
+                }
+            } else {
+                // Standard rows stored as 0-7, original A-J => C-J => 2-9
+                int r = rowOriginal - 2;
+                if (r >= 0 && r < 8 && col >= 0 && col < 15) {
+                    s.standardSeats[r][col] = 'O';
+                    released = true;
+                }
+            }
+            break;
+        }
+    }
+
+    if (!released) {
+        cout << "Failed to release seat for the selected ticket.\n";
+        return;
+    }
+
+    // Remove just this ticket line from the order. If no tickets remain after removal, remove the whole order block.
+    vector<string> outLines;
+    size_t ticketCountRemain = 0;
+    for (size_t i = 0; i < lines.size(); i++) {
+        if (i == lineIdx) {
+            // skip the selected ticket line
+            continue;
+        }
+        if (i > orderStart && i < orderEnd && lines[i].find("Ticket ID") != string::npos) {
+            ticketCountRemain++;
+        }
+        outLines.push_back(lines[i]);
+    }
+
+    // If no tickets remain, delete the whole block from outLines
+    if (ticketCountRemain == 0) {
+        vector<string> tmp;
+        bool skipping = false;
+        for (size_t i = 0; i < outLines.size(); i++) {
+            if (!skipping && outLines[i].find("Order ID") != string::npos && outLines[i].find(orderID) != string::npos) {
+                skipping = true;
+                continue;
+            }
+            if (skipping) {
+                if (outLines[i].find("====================") != string::npos) {
+                    skipping = false;
+                }
+                continue;
+            }
+            tmp.push_back(outLines[i]);
+        }
+        outLines.swap(tmp);
+    }
+
+    // Persist file and seats
+    {
+        ofstream fout("order_history.txt", ios::trunc);
+        for (const auto& l : outLines) fout << l << "\n";
+    }
     saveSeatsToFile(sessions);
 
-    cout << "Order " << orderToCancel << " cancelled and seats released successfully.\n";
+    if (ticketCountRemain == 0) cout << "Order " << orderID << " removed (all tickets refunded).\n";
+    cout << "Selected ticket refunded and seat released successfully.\n";
 }

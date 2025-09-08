@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <limits>
+#include <cctype>
 
 using namespace std;
 
@@ -240,35 +242,44 @@ void saveOrderToFile(const Order& order) {
 // Display order history
 void displayOrderHistory(const string& userID) {
     ifstream file("order_history.txt");
-    string line;
-    bool found = false;
+    if (!file.is_open()) {
+        cout << "Error: Could not open order history file." << endl;
+        return;
+    }
 
     cout << "\n=== Order History for User ID: " << userID << " ===" << endl;
-    if (file.is_open()) {
-        while (getline(file, line)) {
-            if (line.find("User ID") != string::npos && line.find(userID) != string::npos) {
-                found = true;
 
-                // display Order ID line first
-                std::streamoff back = static_cast<std::streamoff>(line.length()) + 1; // +1 ????
-                file.seekg(-back, ios::cur);
-                getline(file, line); // Order ID
-                cout << line << endl;
+    vector<string> block;
+    string line;
+    bool anyPrinted = false;
 
-                // then display the rest of the order details
-                while (getline(file, line) && line.find("====================") == string::npos) {
-                    cout << line << endl;
-                }
-                cout << line << endl << endl;
+    auto flushBlockIfMatch = [&]() {
+        if (block.empty()) return;
+        bool match = false;
+        for (const auto& b : block) {
+            if (b.find("User ID") != string::npos && b.find(userID) != string::npos) {
+                match = true;
+                break;
             }
         }
-        file.close();
-    }
-    else {
-        cout << "Error: Could not open order history file." << endl;
-    }
+        if (match) {
+            for (const auto& b : block) cout << b << endl;
+            cout << endl;
+            anyPrinted = true;
+        }
+        block.clear();
+    };
 
-    if (!found) {
+    while (getline(file, line)) {
+        block.push_back(line);
+        if (line == "====================") {
+            flushBlockIfMatch();
+        }
+    }
+    // Flush last block if file didn't end with delimiter
+    flushBlockIfMatch();
+
+    if (!anyPrinted) {
         cout << "No orders found for User ID: " << userID << endl;
     }
 }

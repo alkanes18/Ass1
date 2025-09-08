@@ -72,25 +72,6 @@ int main() {
                 else {
                     cout << "Login successful.\n";
                     userMenu(userIndex, users, session, merchandise);
-
-                    // After returning from user menu, ask if they want to leave feedback
-                    char fbChoice;
-                    cout << "\nDo you want to leave feedback? (y/n): ";
-                    cin >> fbChoice;
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                    if (fbChoice == 'y' || fbChoice == 'Y') {
-                        FeedbackX fb;
-                        fb.feedbackID = generateFeedbackID();
-                        fb.userID = users[userIndex].userID;
-                        fb.userName = users[userIndex].name;
-                        cout << "Enter your feedback: ";
-                        getline(cin, fb.feedback);
-                        fb.timestamp = getCurrentTimestamp();
-
-                        saveFeedbackX(fb);
-                        cout << "Thank you! Your feedback has been saved.\n";
-                    }
                 }
             }
             else {
