@@ -220,8 +220,9 @@ void addSession(vector<Session>& session) {
     newSession.sessionID = generateSessionID(session);
 
     cout << "\n===== Add a Session =====" << endl;
-    cin.ignore();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
+    // --- Location ---
     do {
         cout << "Enter the location (Eg. Kuala Lumpur, Malaysia): ";
         getline(cin, newSession.location);
@@ -231,6 +232,7 @@ void addSession(vector<Session>& session) {
         }
     } while (newSession.location.empty());
 
+    // --- Date & Time ---
     do {
         cout << "Enter the date & time (Eg. 17/9/2025 (7.30pm - 10.30pm)): ";
         getline(cin, newSession.time);
@@ -242,6 +244,7 @@ void addSession(vector<Session>& session) {
 
     int choice = 0;
     bool askPrice = true;
+
     while (askPrice) {
         cout << "\nPrice for Seats (" << newSession.location << " - " << newSession.time << ")" << endl;
         cout << "----------------------------------------------------------------" << endl;
@@ -249,7 +252,12 @@ void addSession(vector<Session>& session) {
         cout << "2. Custom Price" << endl;
 
         cout << "Your choice (1 - 2): ";
-        cin >> choice;
+        if (!(cin >> choice)) {
+            cout << "Invalid input! Please enter a number (1-2).\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
 
         switch (choice) {
         case 1:
@@ -257,34 +265,43 @@ void addSession(vector<Session>& session) {
             newSession.standardPrice = 150.00;
             askPrice = false;
             break;
+
         case 2:
             do {
                 cout << "\nEnter the VIP ticket price (RM): ";
-                cin >> newSession.vipPrice;
-
-                if (newSession.vipPrice <= 0) {
-                    cout << "Price cannot be negative or zero! Please enter again." << endl;
+                if (!(cin >> newSession.vipPrice)) {
+                    cout << "Invalid input! Please enter a number.\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    continue;
                 }
-
+                if (newSession.vipPrice <= 0) {
+                    cout << "Price cannot be negative or zero! Please enter again.\n";
+                }
             } while (newSession.vipPrice <= 0);
+
             do {
                 cout << "Enter the Standard ticket price (RM): ";
-                cin >> newSession.standardPrice;
-
-                if (newSession.standardPrice < 0) {
-                    cout << "Price cannot be negative or zero! Please enter again." << endl;
+                if (!(cin >> newSession.standardPrice)) {
+                    cout << "Invalid input! Please enter a number.\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    continue;
                 }
+                if (newSession.standardPrice <= 0) {
+                    cout << "Price cannot be negative or zero! Please enter again.\n";
+                }
+            } while (newSession.standardPrice <= 0);
 
-            } while (newSession.standardPrice < 0);
             askPrice = false;
             break;
+
         default:
-            cout << "Invalid option! Please type 1 - 2 only." << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            continue;
+            cout << "Invalid option! Please type 1 - 2 only.\n";
+            break;
         }
     }
+
     initializeSeats(newSession);
     confirmAdd(session, newSession);
 }
