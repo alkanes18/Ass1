@@ -146,12 +146,24 @@ void displayTicketPurchaseMenu(int userIndex, vector<User>& users, vector<Sessio
 
     // Check if payment was cancelled or failed
     if (order.paymentStatus == "Cancelled") {
+        // Restore merchandise stock due to cancellation
+        for (const auto& item : selectedMerchandise) {
+            for (auto& inv : merchandise) {
+                if (inv.itemID == item.itemID) { inv.stock++; break; }
+            }
+        }
         cout << "\n=== Purchase Cancelled ===" << endl;
         cout << "Payment was cancelled. Ticket booking cancelled." << endl;
         return;
     }
 
     if (order.paymentStatus == "Failed") {
+        // Restore merchandise stock due to failure
+        for (const auto& item : selectedMerchandise) {
+            for (auto& inv : merchandise) {
+                if (inv.itemID == item.itemID) { inv.stock++; break; }
+            }
+        }
         cout << "\n=== Purchase Failed ===" << endl;
         cout << "Payment failed. Ticket booking cancelled." << endl;
         return;
